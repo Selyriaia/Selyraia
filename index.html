@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Selyraia — Ce que les IA disent de votre marque</title>
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="apple-touch-icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +15,7 @@
     --bg:#08090B;--bg2:#0E1013;--sf:#131519;--sf2:#181B20;
     --ln:rgba(255,255,255,.08);--ln2:rgba(255,255,255,.14);
     --tx:#F2F3F5;--dm:#9BA1AC;--dm2:#6E747F;
-    --ac:#5B8CFF;--ac2:#8C6BFF;--ok:#3FCF8E;--bad:#FF6B6B;--wn:#FFC46B;--r:16px;
+    --ac:#7B6BFF;--ac2:#B06BFF;--ok:#3FCF8E;--bad:#FF6B6B;--wn:#FFC46B;--r:16px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth;background:var(--bg)}
@@ -25,21 +27,20 @@
   .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
   .hide{display:none!important}
   .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
-    background:radial-gradient(700px 400px at 50% -8%,rgba(91,140,255,.13),transparent 70%),
-               radial-gradient(540px 320px at 88% 8%,rgba(140,107,255,.09),transparent 70%)}
+    background:radial-gradient(700px 400px at 50% -8%,rgba(123,107,255,.15),transparent 70%),
+               radial-gradient(540px 320px at 88% 8%,rgba(176,107,255,.10),transparent 70%)}
   .layer{position:relative;z-index:1}
 
   header.top{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px);background:rgba(8,9,11,.75);border-bottom:1px solid var(--ln)}
-  nav{display:flex;align-items:center;justify-content:space-between;padding:13px 0;gap:12px}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:11px 0;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;background:none;border:0;cursor:pointer;font-size:17px;font-weight:600;color:var(--tx);letter-spacing:-.02em;padding:0}
-  .mk{width:23px;height:23px;border-radius:7px;flex-shrink:0;background:linear-gradient(140deg,var(--ac),var(--ac2));position:relative}
-  .mk::after{content:"";position:absolute;inset:7px;border-radius:2px;background:var(--bg)}
+  .logo img{width:30px;height:30px;border-radius:9px;display:block;flex-shrink:0}
   .nvm{display:flex;gap:2px}
   .nvm a,.nvm button{background:none;border:0;cursor:pointer;font:inherit;font-size:14.5px;color:var(--dm);padding:8px 13px;border-radius:9px}
   .nvm a:hover,.nvm button:hover{color:var(--tx);background:var(--sf)}
   .nvr{display:flex;gap:8px;align-items:center}
-  .who{font-size:13.5px;color:var(--dm2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .adm{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(140,107,255,.15);color:#B99CFF}
+  .who{font-size:13.5px;color:var(--dm2);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .adm{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(176,107,255,.16);color:#D0AEFF}
 
   .btn{font:inherit;font-weight:500;font-size:15.5px;padding:12px 22px;border-radius:11px;border:1px solid transparent;
     cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:background .15s,border-color .15s,opacity .15s}
@@ -51,11 +52,11 @@
   .back{display:inline-flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;color:var(--dm);font:inherit;font-size:14.5px;padding:9px 0;margin:20px 0 2px}
   .back:hover{color:var(--tx)}
 
-  .hero{padding:78px 0 46px;max-width:820px}
+  .hero{padding:76px 0 44px;max-width:820px}
   .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ln2);background:var(--sf);color:var(--dm);font-size:13.5px;padding:6px 14px;border-radius:999px;margin-bottom:24px}
   .pill i{width:6px;height:6px;border-radius:50%;background:var(--ok);display:block}
   h1{font-size:clamp(36px,6.2vw,68px);line-height:1.04;letter-spacing:-.035em;font-weight:600;margin-bottom:20px}
-  h1 .g{background:linear-gradient(100deg,#fff 20%,#8FB0FF 55%,#B99CFF 90%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  h1 .g{background:linear-gradient(100deg,#fff 18%,#A99BFF 52%,#D0AEFF 88%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .lead{font-size:19px;color:var(--dm);max-width:60ch;margin-bottom:30px}
   .hc{display:flex;gap:12px;flex-wrap:wrap}
   .asr{display:flex;gap:20px;flex-wrap:wrap;margin-top:18px;font-size:14.5px;color:var(--dm2)}
@@ -81,14 +82,14 @@
   .tile{padding:28px;background:var(--sf);border:1px solid var(--ln);border-radius:var(--r)}
   .chip{display:inline-block;font-size:12.5px;font-weight:500;padding:5px 12px;border-radius:999px;margin-bottom:16px}
   .chip.a{background:rgba(255,107,107,.1);color:var(--bad)}
-  .chip.b{background:rgba(91,140,255,.1);color:var(--ac)}
+  .chip.b{background:rgba(123,107,255,.12);color:#A99BFF}
   .tile h3{font-size:21px;letter-spacing:-.02em;font-weight:600;margin-bottom:10px}
   .tile p{color:var(--dm);font-size:16px}
   .tile .n{margin-top:18px;padding-top:16px;border-top:1px solid var(--ln);font-size:15px;color:var(--dm2)}
   .tile .n b{color:var(--tx);font-weight:500}
   .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
   .st{padding:26px;background:var(--sf);border:1px solid var(--ln);border-radius:var(--r)}
-  .st .nm{font-size:13px;color:var(--ac);margin-bottom:13px}
+  .st .nm{font-size:13px;color:#A99BFF;margin-bottom:13px}
   .st h3{font-size:18px;letter-spacing:-.015em;font-weight:600;margin-bottom:7px}
   .st p{color:var(--dm);font-size:15.5px}
   .band{border:1px solid var(--ln);border-radius:22px;padding:58px 34px;text-align:center;background:linear-gradient(180deg,var(--sf),var(--bg2))}
@@ -105,7 +106,7 @@
   .g2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
   .box{padding:28px;background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);max-width:660px}
   .hint{font-size:14px;color:var(--dm2);margin-top:9px}
-  .err{font-size:14.5px;color:var(--bad);margin-top:12px}
+  .err{font-size:14.5px;color:var(--bad);margin-top:12px;white-space:pre-wrap}
   .ok{font-size:14.5px;color:var(--ok);margin-top:12px}
 
   .ql{display:flex;flex-direction:column;gap:8px;margin-top:24px}
@@ -116,9 +117,7 @@
   @keyframes p{50%{opacity:.25}}
   .qt{flex:1;color:#D5D8DE}.qv{font-size:13px;color:var(--dm2);white-space:nowrap}
 
-  /* résultats */
-  .verd{padding:30px;border-radius:var(--r);border:1px solid var(--ln);margin-bottom:18px;
-    background:linear-gradient(180deg,rgba(255,107,107,.07),var(--sf))}
+  .verd{padding:30px;border-radius:var(--r);border:1px solid var(--ln);margin-bottom:18px;background:linear-gradient(180deg,rgba(255,107,107,.07),var(--sf))}
   .verd.mid{background:linear-gradient(180deg,rgba(255,196,107,.07),var(--sf))}
   .verd.good{background:linear-gradient(180deg,rgba(63,207,142,.07),var(--sf))}
   .vtop{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:18px}
@@ -135,9 +134,8 @@
   .kp .v{font-size:24px;font-weight:600;letter-spacing:-.02em}
   .prob{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--ln)}
   .prob:last-child{border-bottom:0}
-  .pn{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;
-    background:rgba(255,107,107,.12);color:var(--bad)}
-  .pn.act{background:rgba(91,140,255,.12);color:var(--ac)}
+  .pn{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;background:rgba(255,107,107,.12);color:var(--bad)}
+  .pn.act{background:rgba(123,107,255,.14);color:#A99BFF}
   .prob h4{font-size:17px;font-weight:600;letter-spacing:-.015em;margin-bottom:4px}
   .prob p{font-size:15px;color:var(--dm)}
   .imp{margin-top:7px;font-size:14.5px;color:var(--wn)}
@@ -151,9 +149,14 @@
   .panel h3{font-size:19px;font-weight:600;letter-spacing:-.02em;margin-bottom:5px}
   .panel .ph{color:var(--dm);font-size:15.5px;margin-bottom:20px}
   .locked{padding:32px;text-align:center;border:1px dashed var(--ln2);border-radius:var(--r);background:var(--bg2);margin-top:18px}
-  .lk{display:inline-block;font-size:12.5px;font-weight:500;color:var(--ac);background:rgba(91,140,255,.1);padding:5px 13px;border-radius:999px;margin-bottom:13px}
+  .lk{display:inline-block;font-size:12.5px;font-weight:500;color:#A99BFF;background:rgba(123,107,255,.12);padding:5px 13px;border-radius:999px;margin-bottom:13px}
   .locked h3{font-size:21px;letter-spacing:-.02em;font-weight:600;margin-bottom:9px}
   .locked p{color:var(--dm);max-width:50ch;margin:0 auto 20px;font-size:16px}
+
+  .admbox{padding:18px;border:1px solid rgba(176,107,255,.3);background:rgba(176,107,255,.05);border-radius:14px;margin-bottom:18px;max-width:660px}
+  .admbox h4{font-size:15px;font-weight:600;margin-bottom:4px;color:#D0AEFF}
+  .admbox p{font-size:14px;color:var(--dm);margin-bottom:14px}
+  .diag{font-size:13.5px;color:var(--dm);white-space:pre-wrap;margin-top:12px;font-variant-numeric:tabular-nums}
 
   .bill{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:34px}
   .sw{display:inline-flex;background:var(--sf);border:1px solid var(--ln2);border-radius:999px;padding:4px}
@@ -162,8 +165,8 @@
   .save{font-size:13.5px;padding:6px 13px;border-radius:999px;background:rgba(63,207,142,.1);color:var(--ok)}
   .plans{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
   .plan{padding:26px 20px;display:flex;flex-direction:column;position:relative;background:var(--sf);border:1px solid var(--ln);border-radius:var(--r)}
-  .plan.best{border-color:rgba(91,140,255,.45);background:linear-gradient(180deg,rgba(91,140,255,.06),var(--sf))}
-  .plan .tg{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--ac);color:#08090B;font-size:12px;font-weight:600;padding:4px 13px;border-radius:999px;white-space:nowrap}
+  .plan.best{border-color:rgba(123,107,255,.5);background:linear-gradient(180deg,rgba(123,107,255,.07),var(--sf))}
+  .plan .tg{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--ac);color:#fff;font-size:12px;font-weight:600;padding:4px 13px;border-radius:999px;white-space:nowrap}
   .pn2{font-size:18.5px;font-weight:600;letter-spacing:-.02em;margin-bottom:5px}
   .pf{font-size:14.5px;color:var(--dm2);margin-bottom:20px;min-height:42px}
   .pp{font-size:34px;font-weight:600;letter-spacing:-.035em;line-height:1}
@@ -184,10 +187,10 @@
   .rec b{color:var(--tx);font-weight:500}
 
   .shell{display:grid;grid-template-columns:220px 1fr;gap:22px;padding:22px 0 70px}
-  .side{position:sticky;top:74px;align-self:start}
+  .side{position:sticky;top:72px;align-self:start}
   .uc{padding:14px 15px;background:var(--sf);border:1px solid var(--ln);border-radius:12px;margin-bottom:12px}
   .uc .nm2{font-size:14.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis}
-  .uc .pl{font-size:13px;color:var(--ac);margin-top:2px}
+  .uc .pl{font-size:13px;color:#A99BFF;margin-top:2px}
   .snav{display:flex;flex-direction:column;gap:2px}
   .snav button{background:none;border:0;text-align:left;padding:10px 14px;border-radius:10px;cursor:pointer;font:inherit;font-size:15px;color:var(--dm)}
   .snav button:hover{background:var(--sf);color:var(--tx)}
@@ -207,7 +210,7 @@
     .nvm{display:none}
     .pf,.pnt{min-height:0}
     .band{padding:40px 22px}
-    .hero{padding:48px 0 34px}
+    .hero{padding:46px 0 32px}
     .who{display:none}
     .vnum{font-size:44px}
   }
@@ -218,7 +221,7 @@
 <div class="layer">
 
 <header class="top"><div class="wrap"><nav>
-  <button class="logo" onclick="go('home')"><span class="mk"></span>Selyraia</button>
+  <button class="logo" onclick="go('home')"><img src="logo.png" alt="" onerror="this.style.display='none'">Selyraia</button>
   <div class="nvm" id="nvm">
     <a href="#comment" onclick="go('home')">Comment ça marche</a>
     <button onclick="go('plans')">Tarifs</button>
@@ -295,10 +298,34 @@
 <div class="wrap">
   <button class="back" onclick="back()">← Retour</button>
   <section style="padding-top:12px">
-    <div class="sh"><h2 id="scanTitle">Votre scan</h2>
-      <p id="scanSub">Huit questions posées à une IA, en direct. Six sans jamais citer votre nom.</p></div>
+    <div class="sh"><h2>Votre scan</h2>
+      <p>Huit questions posées à une IA, en direct. Six sans jamais citer votre nom.</p></div>
 
     <div class="rec hide" id="quotaBox" style="max-width:660px"></div>
+
+    <div class="admbox hide" id="admBox">
+      <h4>Panneau administrateur</h4>
+      <p>Scans illimités. Vous pouvez tester chaque moteur et simuler chaque formule.</p>
+      <div class="g2">
+        <div class="fld"><label class="fl" for="a-eng">Moteur à interroger</label>
+          <select id="a-eng">
+            <option value="mistral">Mistral (gratuit)</option>
+            <option value="claude">Claude</option>
+            <option value="openai">GPT</option>
+            <option value="gemini">Gemini</option>
+          </select></div>
+        <div class="fld"><label class="fl" for="a-plan">Simuler la formule</label>
+          <select id="a-plan" onchange="simPlan()">
+            <option value="admin">Administrateur (tout)</option>
+            <option value="free">Découverte</option>
+            <option value="plus">Plus</option>
+            <option value="pro">Pro</option>
+            <option value="agence">Agence</option>
+          </select></div>
+      </div>
+      <button class="btn b2 sm" onclick="runDiag()">Vérifier la configuration serveur</button>
+      <div class="diag hide" id="diagOut"></div>
+    </div>
 
     <div class="box" id="scanForm">
       <div class="fld">
@@ -345,8 +372,7 @@
   <button class="back" onclick="back()">← Retour</button>
   <section style="padding-top:12px">
     <div class="sh" style="text-align:center;margin:0 auto 36px">
-      <h2>Une formule qui vous ressemble</h2>
-      <p>Changez ou arrêtez quand vous voulez.</p></div>
+      <h2>Une formule qui vous ressemble</h2><p>Changez ou arrêtez quand vous voulez.</p></div>
     <div class="bill">
       <div class="sw" role="group" aria-label="Facturation">
         <button type="button" id="bM" aria-pressed="true" onclick="setBill(false)">Mensuel</button>
@@ -366,7 +392,6 @@
           <li><span class="m">✓</span> Diagnostic des problèmes</li>
           <li><span class="m">✓</span> 2 actions prioritaires</li>
           <li class="no"><span class="m">×</span> Pas de suivi dans le temps</li>
-          <li class="no"><span class="m">×</span> Pas de comparaison concurrent</li>
         </ul>
         <button class="btn b2 full" onclick="startScan()">Lancer mon scan</button>
       </div>
@@ -441,7 +466,7 @@
     </div>
     <p style="text-align:center;margin-top:18px;color:var(--dm);font-size:15px">
       <span id="aSw">Vous avez déjà un compte ?</span>
-      <button style="background:none;border:0;color:var(--ac);cursor:pointer;font:inherit;font-weight:500" id="aSwB" onclick="swap()">Se connecter</button>
+      <button style="background:none;border:0;color:#A99BFF;cursor:pointer;font:inherit;font-weight:500" id="aSwB" onclick="swap()">Se connecter</button>
     </p>
   </div>
 </div>
@@ -454,7 +479,6 @@
     <div class="uc"><div class="nm2" id="uN">—</div><div class="pl" id="uP">—</div></div>
     <nav class="snav">
       <button aria-selected="true" onclick="tab('ov',this)">Vue d'ensemble</button>
-      <button aria-selected="false" onclick="tab('sc',this)">Nouveau scan</button>
       <button aria-selected="false" onclick="tab('se',this)">Compte</button>
     </nav>
     <button class="btn b3 sm" style="margin-top:12px;width:100%" onclick="logout()">Déconnexion</button>
@@ -462,23 +486,17 @@
   <div>
     <div id="t-ov">
       <div class="panel">
-        <h3 id="dashTitle">Votre espace</h3>
+        <h3>Votre espace</h3>
         <p class="ph" id="dashSub">Lancez votre premier scan pour voir apparaître votre diagnostic ici.</p>
         <button class="btn b1" onclick="startScan()">Lancer un scan</button>
       </div>
       <div id="lastScan"></div>
     </div>
-    <div id="t-sc" class="hide">
-      <div class="panel"><h3>Nouveau scan</h3><p class="ph">Chaque scan consomme une unité de votre quota.</p>
-        <button class="btn b1" onclick="startScan()">Ouvrir le formulaire</button></div>
-    </div>
     <div id="t-se" class="hide">
       <div class="panel"><h3>Votre compte</h3>
         <p class="ph">Formule active : <b id="setPlan">—</b></p>
         <p class="ph" id="setQuota">—</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn b2 sm" onclick="go('plans')">Changer de formule</button>
-        </div>
+        <button class="btn b2 sm" onclick="go('plans')">Changer de formule</button>
       </div>
     </div>
   </div>
@@ -493,14 +511,13 @@
 </div>
 
 <script>
-/* ═══ Supabase ═══ */
 var SB_URL="https://ysafgvpeotvgpyswjgdu.supabase.co";
 var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYWZndnBlb3R2Z3B5c3dqZ2R1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDQ4NTYsImV4cCI6MjEwMjEyMDg1Nn0.YCTLi3DmaWwDnRETcZscg1__hS9_kN7-xOZg-uAjF8E";
 var supa=null;
 try{ if(window.supabase&&window.supabase.createClient) supa=window.supabase.createClient(SB_URL,SB_KEY); }
 catch(e){ console.error('Supabase indisponible',e); }
 
-var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null};
+var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null,simPlan:'admin'};
 var VIEWS=['home','scan','plans','auth','app'];
 var stack=['home'];
 
@@ -513,7 +530,6 @@ function render(v){
 function go(v){ if(stack[stack.length-1]!==v) stack.push(v); render(v); }
 function back(){ if(stack.length>1){stack.pop();render(stack[stack.length-1]);} else render('home'); }
 
-/* ═══ Barre de navigation ═══ */
 function paintNav(){
   var el=document.getElementById('nvr');
   if(S.user){
@@ -602,7 +618,6 @@ async function token(){
   return r.data&&r.data.session?r.data.session.access_token:null;
 }
 
-/* ═══ État du compte (côté serveur) ═══ */
 async function loadMe(){
   var t=await token(); if(!t) return null;
   try{
@@ -611,8 +626,8 @@ async function loadMe(){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
       body:JSON.stringify({action:'me'})
     });
-    if(!r.ok) return null;
-    return await r.json();
+    var j=await r.json();
+    return r.ok?j:null;
   }catch(e){ return null; }
 }
 
@@ -623,17 +638,16 @@ async function afterLogin(){
   S.me=await loadMe();
   paintNav(); paintDash();
   if(window.location.hash.indexOf('access_token')>=0) history.replaceState(null,'',window.location.pathname);
-  var wanted=localStorage.getItem('selyraia_goto');
-  localStorage.removeItem('selyraia_goto');
-  if(wanted==='scan'){ stack=['home']; go('scan'); paintQuota(); }
-  else { stack=['home']; go('app'); }
+  var w=localStorage.getItem('selyraia_goto'); localStorage.removeItem('selyraia_goto');
+  stack=['home'];
+  if(w==='scan'){ go('scan'); paintQuota(); } else { go('app'); }
 }
 
 async function boot(){
   paintNav();
   if(!supa) return;
   var r=await supa.auth.getSession();
-  if(r.data&&r.data.session){ await afterLogin(); }
+  if(r.data&&r.data.session) await afterLogin();
 }
 boot();
 
@@ -643,7 +657,7 @@ async function logout(){
   paintNav(); stack=['home']; render('home');
 }
 
-/* ═══ Accès au scan ═══ */
+/* ═══ Scan ═══ */
 function startScan(){
   if(!S.user){
     localStorage.setItem('selyraia_goto','scan');
@@ -655,50 +669,76 @@ function startScan(){
 }
 
 function paintQuota(){
-  var b=document.getElementById('quotaBox');
-  if(!S.me){b.classList.add('hide');return;}
-  var btn=document.getElementById('scanBtn');
+  var b=document.getElementById('quotaBox'), btn=document.getElementById('scanBtn');
+  var ad=document.getElementById('admBox');
+  if(!S.me){ b.classList.add('hide'); btn.disabled=false; return; }
+
+  ad.classList.toggle('hide', !S.me.isAdmin);
+
   if(S.me.isAdmin){
-    b.innerHTML='Compte <b>administrateur</b> · scans illimités, toutes formules accessibles.';
-    b.classList.remove('hide'); btn.disabled=false; return;
+    b.innerHTML='Compte <b>administrateur</b> · scans illimités, tous les moteurs, toutes les formules.'+
+      (S.me.dbError?'<br><span style="color:var(--wn)">Base : '+esc(S.me.dbError)+'</span>':'');
+    b.classList.remove('hide'); btn.disabled=false; btn.textContent='Lancer le scan'; return;
   }
   var left=Math.max(0,S.me.quota-S.me.scansUsed);
   if(left<=0){
     b.innerHTML='<b>Votre scan gratuit a déjà été utilisé.</b> Choisissez une formule pour relancer un scan.';
-    b.classList.remove('hide');
-    btn.disabled=true; btn.textContent='Scan indisponible';
+    b.classList.remove('hide'); btn.disabled=true; btn.textContent='Scan indisponible';
   }else{
     b.innerHTML='Formule <b>'+esc(S.me.plan)+'</b> · <b>'+left+'</b> scan'+(left>1?'s':'')+' restant'+(left>1?'s':'')+'.';
-    b.classList.remove('hide');
-    btn.disabled=false; btn.textContent='Lancer le scan';
+    b.classList.remove('hide'); btn.disabled=false; btn.textContent='Lancer le scan';
+  }
+}
+
+function simPlan(){ S.simPlan=document.getElementById('a-plan').value; }
+
+async function runDiag(){
+  var out=document.getElementById('diagOut');
+  out.classList.remove('hide'); out.textContent='Vérification…';
+  try{
+    var r=await fetch('/.netlify/functions/scan',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'diag'})
+    });
+    var j=await r.json();
+    var L=[];
+    L.push('Fonction serveur : '+(r.ok?'en ligne ✓':'injoignable ✗'));
+    ['MISTRAL_API_KEY','SUPABASE_SERVICE_KEY','ANTHROPIC_API_KEY','OPENAI_API_KEY','GEMINI_API_KEY'].forEach(function(k){
+      L.push(k+' : '+(j[k]?'présente ✓':'ABSENTE ✗'));
+    });
+    out.textContent=L.join('\n');
+  }catch(e){
+    out.textContent="Fonction serveur injoignable ✗\nLa fonction n'est pas déployée, ou le fichier netlify/functions/package.json contenant {\"type\":\"module\"} est manquant.";
   }
 }
 
 function syncType(){
   var t=document.getElementById('f-type').value;
-  var lab=document.getElementById('priceLabel'), hint=document.getElementById('priceHint');
+  var lab=document.getElementById('priceLabel'), h=document.getElementById('priceHint');
   if(t==='creator'||t==='media'){
     lab.innerHTML='Tarif de vos prestations <span style="color:var(--dm2)">(facultatif)</span>';
-    hint.textContent="Facultatif pour une chaîne ou un média : la vérification portera sur votre positionnement et vos informations publiques.";
+    h.textContent="Facultatif pour une chaîne ou un média : la vérification portera sur votre positionnement et vos informations publiques.";
   }else{
     lab.textContent='Prix réel de votre offre phare';
-    hint.textContent="Sans ce tarif, impossible de repérer si l'IA annonce un prix erroné.";
+    h.textContent="Sans ce tarif, impossible de repérer si l'IA annonce un prix erroné.";
   }
 }
 
-/* ═══ Scan ═══ */
 async function runScan(){
   var e=document.getElementById('scanErr'); e.classList.add('hide');
   var t=await token();
   if(!t){ e.textContent="Session expirée. Reconnectez-vous."; e.classList.remove('hide'); return; }
 
-  var type=document.getElementById('f-type').value;
+  var engine='mistral';
+  if(S.me&&S.me.isAdmin){ engine=document.getElementById('a-eng').value; }
+
   var d={
     brand:document.getElementById('f-brand').value.trim(),
     activity:document.getElementById('f-act').value.trim(),
     city:document.getElementById('f-city').value.trim(),
     price:document.getElementById('f-price').value.trim(),
-    type:type, engine:'mistral'
+    type:document.getElementById('f-type').value,
+    engine:engine
   };
   if(d.brand.length<2||d.activity.length<2){
     e.textContent="Indiquez au moins votre nom et votre activité."; e.classList.remove('hide'); return;
@@ -709,8 +749,7 @@ async function runScan(){
   document.getElementById('scanProg').classList.remove('hide');
   document.getElementById('scanRes').classList.add('hide');
 
-  var L=document.getElementById('qlist');
-  L.innerHTML='';
+  var L=document.getElementById('qlist'); L.innerHTML='';
   for(var i=0;i<8;i++){
     var row=document.createElement('div'); row.className='qr';
     row.innerHTML='<span class="dot w"></span><span class="qt">Question '+(i+1)+' sur 8</span><span class="qv">en cours…</span>';
@@ -723,7 +762,10 @@ async function runScan(){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
       body:JSON.stringify(d)
     });
-    var data=await r.json();
+    var raw=await r.text();
+    var data;
+    try{ data=JSON.parse(raw); }
+    catch(pe){ throw new Error("Réponse serveur illisible (code "+r.status+").\nLa fonction n'est probablement pas déployée correctement."); }
     if(!r.ok) throw new Error(data.error||('Erreur '+r.status));
     S.last=data;
     S.me=await loadMe();
@@ -738,11 +780,7 @@ async function runScan(){
 }
 
 function showResults(x){
-  document.getElementById('scanProg').classList.add('hide');
-  var L=document.getElementById('qlist');
-
-  // état réel de chaque question
-  L.innerHTML='';
+  var L=document.getElementById('qlist'); L.innerHTML='';
   x.results.forEach(function(r){
     var cls=r.named?'':(r.mentioned?'h':'m');
     var lab=r.named?'question de contrôle':(r.mentioned?'vous êtes cité':'vous êtes absent');
@@ -750,106 +788,94 @@ function showResults(x){
     row.innerHTML='<span class="dot '+cls+'"></span><span class="qt">« '+esc(r.q)+' »</span><span class="qv">'+lab+'</span>';
     L.appendChild(row);
   });
-  document.getElementById('scanProg').classList.remove('hide');
 
   var a=x.analysis||{};
-  var lvl = x.score>=55?'good':(x.score>=25?'mid':'');
-  var lab = x.score>=55?['c','Présence installée']:(x.score>=25?['b','Présence marginale']:['a','Quasi absent']);
+  var lvl=x.score>=55?'good':(x.score>=25?'mid':'');
+  var lab=x.score>=55?['c','Présence installée']:(x.score>=25?['b','Présence marginale']:['a','Quasi absent']);
 
-  var html='<h2 style="margin-bottom:20px">Votre diagnostic</h2>';
+  var h='<h2 style="margin-bottom:20px">Votre diagnostic</h2>';
+  if(x.warning) h+='<div class="rec" style="border-color:rgba(255,196,107,.3)"><b>Avertissement moteur :</b> '+esc(x.warning)+'</div>';
 
-  html+='<div class="verd '+lvl+'">'+
-    '<div class="vtop"><div><div class="vnum">'+x.score+' <span style="font-size:22px;color:var(--dm2)">/100</span></div>'+
+  h+='<div class="verd '+lvl+'"><div class="vtop"><div><div class="vnum">'+x.score+' <span style="font-size:22px;color:var(--dm2)">/100</span></div>'+
     '<div class="vmar">± '+x.margin+' · marge d\'incertitude</div></div>'+
     '<span class="vlab '+lab[0]+'">'+lab[1]+'</span></div>'+
     '<p class="vtxt">'+esc(a.verdict||('Sur '+x.blindTotal+' questions où votre nom n\'était pas prononcé, vous apparaissez dans '+x.hits+'.'))+'</p>'+
     '<div class="kpi">'+
       '<div class="kp"><span class="k">Questions sans votre nom</span><span class="v">'+x.hits+' / '+x.blindTotal+'</span></div>'+
       '<div class="kp"><span class="k">Noms cités à votre place</span><span class="v">'+((a.competitors||[]).length||'—')+'</span></div>'+
-      '<div class="kp"><span class="k">Inexactitudes relevées</span><span class="v">'+((a.errors||[]).length||0)+'</span></div>'+
-    '</div>';
+      '<div class="kp"><span class="k">Inexactitudes relevées</span><span class="v">'+((a.errors||[]).length||0)+'</span></div></div>';
   if((a.competitors||[]).length){
-    html+='<div style="font-size:15px;color:var(--dm)">Cités à votre place :</div><div class="rival">'+
+    h+='<div style="font-size:15px;color:var(--dm)">Cités à votre place :</div><div class="rival">'+
       a.competitors.map(function(c){return '<span class="rv">'+esc(c)+'</span>';}).join('')+'</div>';
   }
-  html+='</div>';
+  h+='</div>';
 
   if((a.problems||[]).length){
-    html+='<div class="panel"><h3>Ce qui ne va pas</h3><p class="ph">Relevé à partir des réponses obtenues à l\'instant.</p>';
+    h+='<div class="panel"><h3>Ce qui ne va pas</h3><p class="ph">Relevé à partir des réponses obtenues à l\'instant.</p>';
     a.problems.forEach(function(p,i){
-      html+='<div class="prob"><span class="pn">'+(i+1)+'</span><div>'+
-        '<h4>'+esc(p.title)+'</h4><p>'+esc(p.detail)+'</p>'+
+      h+='<div class="prob"><span class="pn">'+(i+1)+'</span><div><h4>'+esc(p.title)+'</h4><p>'+esc(p.detail)+'</p>'+
         (p.impact?'<p class="imp">→ '+esc(p.impact)+'</p>':'')+'</div></div>';
     });
-    html+='</div>';
+    h+='</div>';
   }
 
   if((a.errors||[]).length){
-    html+='<div class="panel"><h3>Ce que l\'IA raconte d\'inexact</h3><p class="ph">Chaque ligne provient d\'une réponse réelle, archivée.</p>';
+    h+='<div class="panel"><h3>Ce que l\'IA raconte d\'inexact</h3><p class="ph">Chaque ligne provient d\'une réponse réelle.</p>';
     a.errors.forEach(function(er,i){
-      var g=(er.gravity||'moyenne').toLowerCase();
-      var cls=g.indexOf('haute')>=0?'h':(g.indexOf('basse')>=0?'b':'m');
-      html+='<div class="prob"><span class="pn">'+(i+1)+'</span><div>'+
-        '<h4>'+esc(er.claim)+'<span class="tag '+cls+'">'+esc(er.gravity||'moyenne')+'</span></h4>'+
+      var g=String(er.gravity||'moyenne').toLowerCase();
+      var c=g.indexOf('haute')>=0?'h':(g.indexOf('basse')>=0?'b':'m');
+      h+='<div class="prob"><span class="pn">'+(i+1)+'</span><div><h4>'+esc(er.claim)+'<span class="tag '+c+'">'+esc(er.gravity||'moyenne')+'</span></h4>'+
         '<p>En réalité : '+esc(er.reality)+'</p></div></div>';
     });
-    html+='</div>';
+    h+='</div>';
   }
 
   if((a.actions||[]).length){
-    html+='<div class="panel"><h3>Par quoi commencer</h3><p class="ph">Les actions au meilleur rapport effort / impact.</p>';
+    h+='<div class="panel"><h3>Par quoi commencer</h3><p class="ph">Les actions au meilleur rapport effort / impact.</p>';
     a.actions.forEach(function(ac,i){
-      html+='<div class="prob"><span class="pn act">'+(i+1)+'</span><div>'+
-        '<h4>'+esc(ac.title)+'<span class="tag '+((ac.priority||'').indexOf('haute')>=0?'h':'m')+'">'+esc(ac.priority||'')+'</span></h4>'+
+      h+='<div class="prob"><span class="pn act">'+(i+1)+'</span><div><h4>'+esc(ac.title)+
+        '<span class="tag '+(String(ac.priority||'').indexOf('haute')>=0?'h':'m')+'">'+esc(ac.priority||'')+'</span></h4>'+
         '<p>'+esc(ac.detail)+'</p></div></div>';
     });
-    html+='</div>';
+    h+='</div>';
   }
 
-  html+='<div class="panel"><h3>Les réponses obtenues</h3><p class="ph">Texte réel renvoyé par l\'IA, conservé et vérifiable.</p>';
+  h+='<div class="panel"><h3>Les réponses obtenues</h3><p class="ph">Texte réel renvoyé par l\'IA ('+esc(x.engine)+'), conservé et vérifiable.</p>';
   x.results.slice(0,4).forEach(function(r){
-    html+='<div style="padding:14px 0;border-bottom:1px solid var(--ln)">'+
-      '<p class="wq">« '+esc(r.q)+' »</p><p class="said">'+esc(r.excerpt)+'…</p></div>';
+    h+='<div style="padding:14px 0;border-bottom:1px solid var(--ln)"><p class="wq">« '+esc(r.q)+' »</p><p class="said">'+esc(r.excerpt)+'…</p></div>';
   });
-  html+='</div>';
+  h+='</div>';
 
   if(!x.isAdmin){
-    html+='<div class="locked"><span class="lk">Avec un abonnement</span>'+
-      '<h3>Passez à 20 questions et 3 moteurs</h3>'+
+    h+='<div class="locked"><span class="lk">Avec un abonnement</span><h3>Passez à 20 questions et 3 moteurs</h3>'+
       '<p>Comparaison avec vos concurrents, suivi semaine après semaine, toutes les inexactitudes et 5 actions priorisées.</p>'+
       '<button class="btn b1 lg" onclick="go(\'plans\')">Voir les formules</button></div>';
   }
 
   var box=document.getElementById('scanRes');
-  box.innerHTML=html;
-  box.classList.remove('hide');
+  box.innerHTML=h; box.classList.remove('hide');
   box.scrollIntoView({behavior:'smooth'});
 }
 
-/* ═══ Espace client ═══ */
 function paintDash(){
   if(!S.user) return;
   document.getElementById('uN').textContent=S.user.email;
-  var p=S.me?(S.me.isAdmin?'Administrateur':'Formule '+S.me.plan):'—';
-  document.getElementById('uP').textContent=p;
+  document.getElementById('uP').textContent=S.me?(S.me.isAdmin?'Administrateur':'Formule '+S.me.plan):'—';
   document.getElementById('setPlan').textContent=S.me?(S.me.isAdmin?'Administrateur':S.me.plan):'—';
-  document.getElementById('setQuota').textContent=S.me
-    ? (S.me.isAdmin?'Scans illimités.':'Scans utilisés : '+S.me.scansUsed+' sur '+S.me.quota+'.')
-    : '—';
+  document.getElementById('setQuota').textContent=S.me?(S.me.isAdmin?'Scans illimités.':'Scans utilisés : '+S.me.scansUsed+' sur '+S.me.quota+'.'):'—';
   var ls=document.getElementById('lastScan');
   if(S.last){
     document.getElementById('dashSub').textContent='Dernier scan sur « '+S.last.brand+' ».';
-    ls.innerHTML='<div class="panel"><h3>Dernier diagnostic</h3>'+
-      '<p class="ph">Score '+S.last.score+' ± '+S.last.margin+' · cité dans '+S.last.hits+' des '+S.last.blindTotal+' questions anonymes.</p></div>';
+    ls.innerHTML='<div class="panel"><h3>Dernier diagnostic</h3><p class="ph">Score '+S.last.score+' ± '+S.last.margin+
+      ' · cité dans '+S.last.hits+' des '+S.last.blindTotal+' questions anonymes.</p></div>';
   } else ls.innerHTML='';
 }
 
 function tab(id,btn){
-  ['ov','sc','se'].forEach(function(x){document.getElementById('t-'+x).classList.toggle('hide',x!==id);});
+  ['ov','se'].forEach(function(x){document.getElementById('t-'+x).classList.toggle('hide',x!==id);});
   document.querySelectorAll('.snav button').forEach(function(b){b.setAttribute('aria-selected',String(b===btn));});
 }
 
-/* ═══ Tarifs ═══ */
 function setBill(y){
   S.yearly=y;
   document.getElementById('bM').setAttribute('aria-pressed',String(!y));
@@ -860,6 +886,7 @@ function setBill(y){
 function pick(p){
   S.plan=p;
   if(!S.user){S.mode='signup';paintAuth();go('auth');}
+  else if(S.me&&S.me.isAdmin){ alert("Compte administrateur : toutes les formules sont déjà accessibles. Utilisez le panneau administrateur sur la page de scan pour en simuler une."); }
   else{ alert("Le paiement n'est pas encore actif. Contactez-nous pour activer la formule "+p+"."); }
 }
 </script>
