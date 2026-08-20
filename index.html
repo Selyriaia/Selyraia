@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Selyraia — Ce que les IA disent de votre marque</title>
-<link rel="icon" href="logo.png" type="image/png">
-<link rel="apple-touch-icon" href="logo.png">
+<link rel="icon" href="logo.png?v=2" type="image/png">
+<link rel="apple-touch-icon" href="logo.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,7 +39,7 @@
   .nvm a,.nvm button{background:none;border:0;cursor:pointer;font:inherit;font-size:14.5px;color:var(--dm);padding:8px 13px;border-radius:9px}
   .nvm a:hover,.nvm button:hover{color:var(--tx);background:var(--sf)}
   .nvr{display:flex;gap:8px;align-items:center}
-  .who{font-size:13.5px;color:var(--dm2);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .who{font-size:13.5px;color:var(--dm2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .adm{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(176,107,255,.16);color:#D0AEFF}
 
   .btn{font:inherit;font-weight:500;font-size:15.5px;padding:12px 22px;border-radius:11px;border:1px solid transparent;
@@ -49,8 +49,9 @@
   .b3{background:transparent;color:var(--dm)}.b3:hover{color:var(--tx);background:var(--sf)}
   .sm{padding:8px 15px;font-size:14.5px}.lg{padding:15px 28px;font-size:16.5px}.full{width:100%}
   .btn[disabled]{opacity:.4;cursor:not-allowed}
-  .back{display:inline-flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;color:var(--dm);font:inherit;font-size:14.5px;padding:9px 0;margin:20px 0 2px}
-  .back:hover{color:var(--tx)}
+  .navbar2{display:flex;gap:10px;align-items:center;margin:18px 0 2px;flex-wrap:wrap}
+  .navbar2 button{background:none;border:0;cursor:pointer;color:var(--dm);font:inherit;font-size:14.5px;padding:8px 12px;border-radius:9px}
+  .navbar2 button:hover{color:var(--tx);background:var(--sf)}
 
   .hero{padding:76px 0 44px;max-width:820px}
   .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ln2);background:var(--sf);color:var(--dm);font-size:13.5px;padding:6px 14px;border-radius:999px;margin-bottom:24px}
@@ -116,6 +117,8 @@
   .dot.h{background:var(--ok)}.dot.m{background:var(--bad)}
   @keyframes p{50%{opacity:.25}}
   .qt{flex:1;color:#D5D8DE}.qv{font-size:13px;color:var(--dm2);white-space:nowrap}
+  .bar{height:5px;background:var(--sf2);border-radius:999px;overflow:hidden;margin-top:14px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));width:0;transition:width .3s ease}
 
   .verd{padding:30px;border-radius:var(--r);border:1px solid var(--ln);margin-bottom:18px;background:linear-gradient(180deg,rgba(255,107,107,.07),var(--sf))}
   .verd.mid{background:linear-gradient(180deg,rgba(255,196,107,.07),var(--sf))}
@@ -177,7 +180,9 @@
   .plan li .m{color:var(--ok);flex-shrink:0;font-size:13px;padding-top:3px}
   .plan li.no{color:var(--dm2)}.plan li.no .m{color:var(--dm2)}
 
-  .authbox{max-width:420px;margin:28px auto 80px}
+  .authbox{max-width:420px;margin:20px auto 80px}
+  .authlogo{display:flex;justify-content:center;margin-bottom:18px}
+  .authlogo img{width:56px;height:56px;border-radius:16px}
   .prov{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;background:var(--bg2);border:1px solid var(--ln2);
     padding:13px;border-radius:11px;cursor:pointer;font:inherit;font-size:15.5px;font-weight:500;color:var(--tx);margin-bottom:10px}
   .prov:hover{border-color:rgba(255,255,255,.28);background:var(--sf2)}
@@ -221,8 +226,9 @@
 <div class="layer">
 
 <header class="top"><div class="wrap"><nav>
-  <button class="logo" onclick="go('home')"><img src="logo.png" alt="" onerror="this.style.display='none'">Selyraia</button>
+  <button class="logo" onclick="go('home')"><img src="logo.png?v=2" alt="" onerror="this.style.display='none'">Selyraia</button>
   <div class="nvm" id="nvm">
+    <button onclick="go('home')">Accueil</button>
     <a href="#comment" onclick="go('home')">Comment ça marche</a>
     <button onclick="go('plans')">Tarifs</button>
   </div>
@@ -296,8 +302,11 @@
 <!-- SCAN -->
 <main id="v-scan" class="hide">
 <div class="wrap">
-  <button class="back" onclick="back()">← Retour</button>
-  <section style="padding-top:12px">
+  <div class="navbar2">
+    <button onclick="go('home')">← Accueil</button>
+    <button onclick="back()">Retour</button>
+  </div>
+  <section style="padding-top:6px">
     <div class="sh"><h2>Votre scan</h2>
       <p>Huit questions posées à une IA, en direct. Six sans jamais citer votre nom.</p></div>
 
@@ -305,24 +314,14 @@
 
     <div class="admbox hide" id="admBox">
       <h4>Panneau administrateur</h4>
-      <p>Scans illimités. Vous pouvez tester chaque moteur et simuler chaque formule.</p>
-      <div class="g2">
-        <div class="fld"><label class="fl" for="a-eng">Moteur à interroger</label>
-          <select id="a-eng">
-            <option value="mistral">Mistral (gratuit)</option>
-            <option value="claude">Claude</option>
-            <option value="openai">GPT</option>
-            <option value="gemini">Gemini</option>
-          </select></div>
-        <div class="fld"><label class="fl" for="a-plan">Simuler la formule</label>
-          <select id="a-plan" onchange="simPlan()">
-            <option value="admin">Administrateur (tout)</option>
-            <option value="free">Découverte</option>
-            <option value="plus">Plus</option>
-            <option value="pro">Pro</option>
-            <option value="agence">Agence</option>
-          </select></div>
-      </div>
+      <p>Scans illimités. Vous pouvez tester chaque moteur.</p>
+      <div class="fld" style="max-width:320px"><label class="fl" for="a-eng">Moteur à interroger</label>
+        <select id="a-eng">
+          <option value="mistral">Mistral (gratuit)</option>
+          <option value="claude">Claude</option>
+          <option value="openai">GPT</option>
+          <option value="gemini">Gemini</option>
+        </select></div>
       <button class="btn b2 sm" onclick="runDiag()">Vérifier la configuration serveur</button>
       <div class="diag hide" id="diagOut"></div>
     </div>
@@ -356,8 +355,9 @@
     </div>
 
     <div id="scanProg" class="hide">
-      <h3 style="margin-top:34px;font-size:19px;font-weight:600">Interrogation en cours…</h3>
-      <p class="hint">Chaque question part réellement vers une IA. Comptez une minute.</p>
+      <h3 style="margin-top:34px;font-size:19px;font-weight:600" id="progTitle">Interrogation en cours…</h3>
+      <p class="hint">Chaque question part réellement vers une IA. Restez sur la page.</p>
+      <div class="bar"><i id="progBar"></i></div>
       <div class="ql" id="qlist"></div>
     </div>
   </section>
@@ -369,8 +369,11 @@
 <!-- PLANS -->
 <main id="v-plans" class="hide">
 <div class="wrap">
-  <button class="back" onclick="back()">← Retour</button>
-  <section style="padding-top:12px">
+  <div class="navbar2">
+    <button onclick="go('home')">← Accueil</button>
+    <button onclick="back()">Retour</button>
+  </div>
+  <section style="padding-top:6px">
     <div class="sh" style="text-align:center;margin:0 auto 36px">
       <h2>Une formule qui vous ressemble</h2><p>Changez ou arrêtez quand vous voulez.</p></div>
     <div class="bill">
@@ -446,8 +449,9 @@
 <!-- AUTH -->
 <main id="v-auth" class="hide">
 <div class="wrap">
-  <button class="back" onclick="back()">← Retour</button>
+  <div class="navbar2"><button onclick="go('home')">← Accueil</button></div>
   <div class="authbox">
+    <div class="authlogo"><img src="logo.png?v=2" alt="Selyraia" onerror="this.style.display='none'"></div>
     <div style="text-align:center;margin-bottom:24px">
       <h2 id="aT" style="font-size:29px;margin-bottom:8px">Créer votre compte</h2>
       <p id="aS" style="color:var(--dm);font-size:16px">Le scan gratuit est offert une fois par compte.</p>
@@ -474,7 +478,9 @@
 
 <!-- APP -->
 <main id="v-app" class="hide">
-<div class="wrap"><div class="shell">
+<div class="wrap">
+  <div class="navbar2"><button onclick="go('home')">← Accueil</button></div>
+  <div class="shell">
   <aside class="side">
     <div class="uc"><div class="nm2" id="uN">—</div><div class="pl" id="uP">—</div></div>
     <nav class="snav">
@@ -513,18 +519,23 @@
 <script>
 var SB_URL="https://ysafgvpeotvgpyswjgdu.supabase.co";
 var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYWZndnBlb3R2Z3B5c3dqZ2R1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDQ4NTYsImV4cCI6MjEwMjEyMDg1Nn0.YCTLi3DmaWwDnRETcZscg1__hS9_kN7-xOZg-uAjF8E";
-var supa=null;
-try{ if(window.supabase&&window.supabase.createClient) supa=window.supabase.createClient(SB_URL,SB_KEY); }
-catch(e){ console.error('Supabase indisponible',e); }
 
-var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null,simPlan:'admin'};
+var supa=null;
+try{
+  if(window.supabase&&window.supabase.createClient){
+    supa=window.supabase.createClient(SB_URL,SB_KEY,{
+      auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, storage:window.localStorage }
+    });
+  }
+}catch(e){ console.error('Supabase indisponible',e); }
+
+var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null};
 var VIEWS=['home','scan','plans','auth','app'];
 var stack=['home'];
 
 function esc(t){var d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;}
 function render(v){
   VIEWS.forEach(function(x){document.getElementById('v-'+x).classList.toggle('hide',x!==v);});
-  document.getElementById('nvm').classList.toggle('hide',v==='app');
   window.scrollTo(0,0);
 }
 function go(v){ if(stack[stack.length-1]!==v) stack.push(v); render(v); }
@@ -541,6 +552,50 @@ function paintNav(){
     el.innerHTML='<button class="btn b3 sm" onclick="openAuth(\'login\')">Se connecter</button>'+
       '<button class="btn b1 sm" onclick="startScan()">Scan gratuit</button>';
   }
+}
+
+/* ═══ Session : persistante, jamais effacée par une erreur réseau ═══ */
+if(supa){
+  supa.auth.onAuthStateChange(function(event, session){
+    if(session && session.user){
+      S.user=session.user;
+      paintNav();
+      if(event==='SIGNED_IN'){ hydrate(true); }
+    }else if(event==='SIGNED_OUT'){
+      S.user=null; S.me=null; S.last=null;
+      paintNav();
+    }
+    // TOKEN_REFRESHED, USER_UPDATED : on ne touche à rien.
+  });
+}
+
+async function hydrate(navigate){
+  if(!S.user) return;
+  var m=await loadMe();
+  if(m) S.me=m;              // si l'appel échoue on garde l'ancien état : pas de déconnexion
+  paintNav(); paintDash();
+  if(window.location.hash.indexOf('access_token')>=0) history.replaceState(null,'',window.location.pathname);
+  if(navigate){
+    var w=localStorage.getItem('selyraia_goto'); localStorage.removeItem('selyraia_goto');
+    stack=['home'];
+    if(w==='scan'){ go('scan'); paintQuota(); } else { go('app'); }
+  }
+}
+
+async function boot(){
+  paintNav();
+  if(!supa) return;
+  try{
+    var r=await supa.auth.getSession();
+    if(r.data&&r.data.session){ S.user=r.data.session.user; await hydrate(false); }
+  }catch(e){}
+}
+boot();
+
+async function logout(){
+  if(supa){try{await supa.auth.signOut();}catch(e){}}
+  S.user=null;S.me=null;S.plan=null;S.last=null;
+  paintNav(); stack=['home']; render('home');
 }
 
 /* ═══ Auth ═══ */
@@ -596,11 +651,12 @@ async function eAuth(){
       res=await supa.auth.signInWithPassword({email:m,password:p});
       if(res.error) throw res.error;
     }
-    await afterLogin();
+    S.user=res.data.user||S.user;
+    await hydrate(true);
   }catch(err){
     aErr(tr(err.message||"Une erreur est survenue."));
-    b.disabled=false;b.textContent=lb;
   }
+  b.disabled=false;b.textContent=lb;
 }
 
 function tr(m){
@@ -614,47 +670,30 @@ function tr(m){
 
 async function token(){
   if(!supa) return null;
-  var r=await supa.auth.getSession();
-  return r.data&&r.data.session?r.data.session.access_token:null;
-}
-
-async function loadMe(){
-  var t=await token(); if(!t) return null;
   try{
-    var r=await fetch('/.netlify/functions/scan',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
-      body:JSON.stringify({action:'me'})
-    });
-    var j=await r.json();
-    return r.ok?j:null;
+    var r=await supa.auth.getSession();
+    return r.data&&r.data.session?r.data.session.access_token:null;
   }catch(e){ return null; }
 }
 
-async function afterLogin(){
-  var s=await supa.auth.getSession();
-  if(!(s.data&&s.data.session)) return;
-  S.user=s.data.session.user;
-  S.me=await loadMe();
-  paintNav(); paintDash();
-  if(window.location.hash.indexOf('access_token')>=0) history.replaceState(null,'',window.location.pathname);
-  var w=localStorage.getItem('selyraia_goto'); localStorage.removeItem('selyraia_goto');
-  stack=['home'];
-  if(w==='scan'){ go('scan'); paintQuota(); } else { go('app'); }
+async function api(payload, needAuth){
+  var h={'Content-Type':'application/json'};
+  if(needAuth!==false){
+    var t=await token();
+    if(!t) throw new Error("Session expirée. Reconnectez-vous.");
+    h['Authorization']='Bearer '+t;
+  }
+  var r=await fetch('/.netlify/functions/scan',{method:'POST',headers:h,body:JSON.stringify(payload)});
+  var raw=await r.text();
+  var j;
+  try{ j=JSON.parse(raw); }
+  catch(e){ throw new Error("Réponse serveur illisible (code "+r.status+").\nLa fonction n'est probablement pas déployée : vérifiez netlify/functions/package.json"); }
+  if(!r.ok) throw new Error(j.error||('Erreur '+r.status));
+  return j;
 }
 
-async function boot(){
-  paintNav();
-  if(!supa) return;
-  var r=await supa.auth.getSession();
-  if(r.data&&r.data.session) await afterLogin();
-}
-boot();
-
-async function logout(){
-  if(supa){try{await supa.auth.signOut();}catch(e){}}
-  S.user=null;S.me=null;S.plan=null;S.last=null;
-  paintNav(); stack=['home']; render('home');
+async function loadMe(){
+  try{ return await api({action:'me'}); }catch(e){ return null; }
 }
 
 /* ═══ Scan ═══ */
@@ -669,12 +708,9 @@ function startScan(){
 }
 
 function paintQuota(){
-  var b=document.getElementById('quotaBox'), btn=document.getElementById('scanBtn');
-  var ad=document.getElementById('admBox');
-  if(!S.me){ b.classList.add('hide'); btn.disabled=false; return; }
-
+  var b=document.getElementById('quotaBox'), btn=document.getElementById('scanBtn'), ad=document.getElementById('admBox');
+  if(!S.me){ b.classList.add('hide'); ad.classList.add('hide'); btn.disabled=false; return; }
   ad.classList.toggle('hide', !S.me.isAdmin);
-
   if(S.me.isAdmin){
     b.innerHTML='Compte <b>administrateur</b> · scans illimités, tous les moteurs, toutes les formules.'+
       (S.me.dbError?'<br><span style="color:var(--wn)">Base : '+esc(S.me.dbError)+'</span>':'');
@@ -690,25 +726,18 @@ function paintQuota(){
   }
 }
 
-function simPlan(){ S.simPlan=document.getElementById('a-plan').value; }
-
 async function runDiag(){
   var out=document.getElementById('diagOut');
   out.classList.remove('hide'); out.textContent='Vérification…';
   try{
-    var r=await fetch('/.netlify/functions/scan',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'diag'})
-    });
-    var j=await r.json();
-    var L=[];
-    L.push('Fonction serveur : '+(r.ok?'en ligne ✓':'injoignable ✗'));
+    var j=await api({action:'diag'}, false);
+    var L=['Fonction serveur : en ligne ✓'];
     ['MISTRAL_API_KEY','SUPABASE_SERVICE_KEY','ANTHROPIC_API_KEY','OPENAI_API_KEY','GEMINI_API_KEY'].forEach(function(k){
       L.push(k+' : '+(j[k]?'présente ✓':'ABSENTE ✗'));
     });
     out.textContent=L.join('\n');
   }catch(e){
-    out.textContent="Fonction serveur injoignable ✗\nLa fonction n'est pas déployée, ou le fichier netlify/functions/package.json contenant {\"type\":\"module\"} est manquant.";
+    out.textContent="Fonction serveur injoignable ✗\n"+e.message;
   }
 }
 
@@ -726,11 +755,7 @@ function syncType(){
 
 async function runScan(){
   var e=document.getElementById('scanErr'); e.classList.add('hide');
-  var t=await token();
-  if(!t){ e.textContent="Session expirée. Reconnectez-vous."; e.classList.remove('hide'); return; }
-
-  var engine='mistral';
-  if(S.me&&S.me.isAdmin){ engine=document.getElementById('a-eng').value; }
+  var engine=(S.me&&S.me.isAdmin)?document.getElementById('a-eng').value:'mistral';
 
   var d={
     brand:document.getElementById('f-brand').value.trim(),
@@ -748,53 +773,89 @@ async function runScan(){
   btn.disabled=true; btn.textContent='Scan en cours…';
   document.getElementById('scanProg').classList.remove('hide');
   document.getElementById('scanRes').classList.add('hide');
-
-  var L=document.getElementById('qlist'); L.innerHTML='';
-  for(var i=0;i<8;i++){
-    var row=document.createElement('div'); row.className='qr';
-    row.innerHTML='<span class="dot w"></span><span class="qt">Question '+(i+1)+' sur 8</span><span class="qv">en cours…</span>';
-    L.appendChild(row);
-  }
+  document.getElementById('progBar').style.width='0%';
 
   try{
-    var r=await fetch('/.netlify/functions/scan',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
-      body:JSON.stringify(d)
+    /* 1. démarrage : quota + liste des questions */
+    var st=await api({action:'start',brand:d.brand,activity:d.activity,city:d.city,type:d.type,engine:engine});
+    var QS=st.questions||[];
+
+    var L=document.getElementById('qlist'); L.innerHTML='';
+    QS.forEach(function(q,i){
+      var row=document.createElement('div'); row.className='qr'; row.id='qr'+i;
+      row.innerHTML='<span class="dot" id="d'+i+'"></span><span class="qt">« '+esc(q.q)+' »</span><span class="qv" id="v'+i+'">en attente</span>';
+      L.appendChild(row);
     });
-    var raw=await r.text();
-    var data;
-    try{ data=JSON.parse(raw); }
-    catch(pe){ throw new Error("Réponse serveur illisible (code "+r.status+").\nLa fonction n'est probablement pas déployée correctement."); }
-    if(!r.ok) throw new Error(data.error||('Erreur '+r.status));
+
+    /* 2. une requête courte par question — sous la limite des 10 s de Netlify */
+    var results=[], failed=0, firstErr=null;
+    for(var i=0;i<QS.length;i++){
+      document.getElementById('d'+i).className='dot w';
+      document.getElementById('v'+i).textContent='interrogation…';
+      document.getElementById('progTitle').textContent='Question '+(i+1)+' sur '+QS.length+'…';
+      var text='';
+      try{
+        var rr=await api({action:'ask',q:QS[i].q,engine:engine});
+        text=rr.text||'';
+      }catch(err){ failed++; if(!firstErr) firstErr=err.message; }
+      var men=!!text && text.toLowerCase().indexOf(d.brand.toLowerCase())>=0;
+      results.push({q:QS[i].q,named:QS[i].named,weight:QS[i].weight,text:text,mentioned:men});
+      document.getElementById('d'+i).className='dot '+(text?(QS[i].named?'':(men?'h':'m')):'m');
+      document.getElementById('v'+i).textContent=text?(QS[i].named?'question de contrôle':(men?'vous êtes cité':'vous êtes absent')):'échec';
+      document.getElementById('progBar').style.width=Math.round((i+1)/(QS.length+1)*100)+'%';
+    }
+
+    if(!results.some(function(r){return r.text;})){
+      throw new Error("Aucune réponse obtenue du moteur.\n"+(firstErr||''));
+    }
+
+    /* 3. calcul du score */
+    var blind=results.filter(function(r){return !r.named && r.text;});
+    var tw=blind.reduce(function(s,r){return s+(r.weight||1);},0)||1;
+    var gw=blind.filter(function(r){return r.mentioned;}).reduce(function(s,r){return s+(r.weight||1);},0);
+    var score=Math.round(gw/tw*100);
+    var hits=blind.filter(function(r){return r.mentioned;}).length;
+    var margin=Math.max(5,Math.round(38/Math.sqrt(blind.length||1)));
+
+    /* 4. diagnostic */
+    document.getElementById('progTitle').textContent='Analyse des réponses…';
+    var corpus=results.filter(function(r){return r.text;})
+      .map(function(r){return 'Q: '+r.q+'\nR: '+r.text.slice(0,700);}).join('\n\n');
+    var an=null, warn=firstErr;
+    try{
+      var az=await api({action:'analyze',brand:d.brand,activity:d.activity,city:d.city,price:d.price,
+                        corpus:corpus,hits:hits,total:blind.length,engine:engine});
+      an=az.analysis;
+      if(az.warning&&!warn) warn=az.warning;
+    }catch(err){ if(!warn) warn=err.message; }
+
+    document.getElementById('progBar').style.width='100%';
+    document.getElementById('progTitle').textContent='Scan terminé';
+
+    var data={brand:d.brand,score:score,margin:margin,hits:hits,blindTotal:blind.length,
+      engine:st.engineLabel||'Mistral',isAdmin:!!st.isAdmin,
+      warning:(st.isAdmin&&warn)?warn:(failed?('Certaines questions n\'ont pas abouti ('+failed+').'):null),
+      results:results.map(function(r){return {q:r.q,named:r.named,mentioned:r.mentioned,excerpt:(r.text||'').slice(0,600)};}),
+      analysis:an};
+
     S.last=data;
-    S.me=await loadMe();
+    var m=await loadMe(); if(m) S.me=m;
     paintNav(); paintQuota(); paintDash();
     showResults(data);
   }catch(err){
     e.textContent=err.message||"Le scan n'a pas abouti.";
     e.classList.remove('hide');
-    document.getElementById('scanProg').classList.add('hide');
   }
   btn.disabled=false; btn.textContent='Lancer le scan';
 }
 
 function showResults(x){
-  var L=document.getElementById('qlist'); L.innerHTML='';
-  x.results.forEach(function(r){
-    var cls=r.named?'':(r.mentioned?'h':'m');
-    var lab=r.named?'question de contrôle':(r.mentioned?'vous êtes cité':'vous êtes absent');
-    var row=document.createElement('div'); row.className='qr';
-    row.innerHTML='<span class="dot '+cls+'"></span><span class="qt">« '+esc(r.q)+' »</span><span class="qv">'+lab+'</span>';
-    L.appendChild(row);
-  });
-
   var a=x.analysis||{};
   var lvl=x.score>=55?'good':(x.score>=25?'mid':'');
   var lab=x.score>=55?['c','Présence installée']:(x.score>=25?['b','Présence marginale']:['a','Quasi absent']);
 
   var h='<h2 style="margin-bottom:20px">Votre diagnostic</h2>';
-  if(x.warning) h+='<div class="rec" style="border-color:rgba(255,196,107,.3)"><b>Avertissement moteur :</b> '+esc(x.warning)+'</div>';
+  if(x.warning) h+='<div class="rec" style="border-color:rgba(255,196,107,.3)"><b>Note technique :</b> '+esc(x.warning)+'</div>';
 
   h+='<div class="verd '+lvl+'"><div class="vtop"><div><div class="vnum">'+x.score+' <span style="font-size:22px;color:var(--dm2)">/100</span></div>'+
     '<div class="vmar">± '+x.margin+' · marge d\'incertitude</div></div>'+
@@ -841,7 +902,7 @@ function showResults(x){
   }
 
   h+='<div class="panel"><h3>Les réponses obtenues</h3><p class="ph">Texte réel renvoyé par l\'IA ('+esc(x.engine)+'), conservé et vérifiable.</p>';
-  x.results.slice(0,4).forEach(function(r){
+  x.results.filter(function(r){return r.excerpt;}).slice(0,4).forEach(function(r){
     h+='<div style="padding:14px 0;border-bottom:1px solid var(--ln)"><p class="wq">« '+esc(r.q)+' »</p><p class="said">'+esc(r.excerpt)+'…</p></div>';
   });
   h+='</div>';
@@ -886,7 +947,7 @@ function setBill(y){
 function pick(p){
   S.plan=p;
   if(!S.user){S.mode='signup';paintAuth();go('auth');}
-  else if(S.me&&S.me.isAdmin){ alert("Compte administrateur : toutes les formules sont déjà accessibles. Utilisez le panneau administrateur sur la page de scan pour en simuler une."); }
+  else if(S.me&&S.me.isAdmin){ alert("Compte administrateur : toutes les formules sont déjà accessibles."); }
   else{ alert("Le paiement n'est pas encore actif. Contactez-nous pour activer la formule "+p+"."); }
 }
 </script>
