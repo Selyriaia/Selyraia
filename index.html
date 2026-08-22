@@ -583,6 +583,7 @@
       <button aria-selected="true" onclick="tab('ov',this)">Vue d'ensemble</button>
       <button aria-selected="false" class="hide" id="tabAg" onclick="tab('ag',this)">Marques clientes</button>
       <button aria-selected="false" class="hide" id="tabPr" onclick="tab('pr',this)">Prestations</button>
+      <button aria-selected="false" class="hide" id="tabUs" onclick="tab('us',this)">Comptes clients</button>
       <button aria-selected="false" onclick="tab('se',this)">Compte</button>
     </nav>
     <button class="btn b3 sm" style="margin-top:12px;width:100%" onclick="logout()">Déconnexion</button>
@@ -631,6 +632,14 @@
         <p class="ph">Les problèmes que vous nous confiez. Nous les analysons, nous chiffrons, vous validez.</p>
       </div>
       <div id="intervList"></div>
+    </div>
+
+    <div id="t-us" class="hide">
+      <div class="panel">
+        <h3>Comptes et abonnements</h3>
+        <p class="ph">Activez, changez ou désactivez la formule d'un client. Le changement remet sa période à zéro.</p>
+      </div>
+      <div id="userList"></div>
     </div>
 
     <div id="t-se" class="hide">
@@ -708,7 +717,8 @@ async function hydrate(navigate){
   if(!S.user) return;
   var m=await loadMe();
   if(m) S.me=m;              // si l'appel échoue on garde l'ancien état : pas de déconnexion
-  paintNav(); paintDash(); loadHistory(); loadAgency();
+  paintNav(); paintDash(); loadHistory(); loadAgency(); loadUsers();
+  document.getElementById('tabUs').classList.toggle('hide', !(S.me&&S.me.isAdmin));
   var ag=!!(S.me&&(S.me.agency||S.me.isAdmin));
   document.getElementById('tabAg').classList.toggle('hide', !(S.me&&S.me.agency));
   document.getElementById('tabPr').classList.toggle('hide', !ag);
@@ -1441,6 +1451,48 @@ function paintIntervs(){
   }).join('')+'</div>';
 }
 
+/* ═══ Abonnements (administrateur) ═══════════════════════════════════ */
+
+var PLAN_NOMS={free:'Découverte',plus:'Plus',pro:'Pro',agence:'Agence'};
+
+async function loadUsers(){
+  if(!(S.me&&S.me.isAdmin)) return;
+  try{ var r=await api({action:'users_list'}); S.users=r.users||[]; }catch(e){ S.users=[]; }
+  paintUsers();
+}
+
+function paintUsers(){
+  var el=document.getElementById('userList'); if(!el) return;
+  var l=S.users||[];
+  if(!l.length){ el.innerHTML='<div class="panel"><p class="ph">Aucun compte.</p></div>'; return; }
+  el.innerHTML='<div class="panel"><h3>'+l.length+' compte'+(l.length>1?'s':'')+'</h3>'
+    +l.map(function(u){
+      var opts=['free','plus','pro','agence'].map(function(k){
+        return '<option value="'+k+'"'+((u.plan||'free')===k?' selected':'')+'>'+PLAN_NOMS[k]+'</option>';
+      }).join('');
+      var dernier=u.last_scan_at? new Date(u.last_scan_at).toLocaleDateString('fr-FR') : 'jamais';
+      return '<div class="hrow" style="cursor:default">'
+        +'<div class="hmain"><h4>'+esc(u.email||'(sans email)')+'</h4>'
+        +'<p>'+u.scans_used+' scan'+(u.scans_used>1?'s':'')+' · dernier : '+dernier+'</p></div>'
+        +'<div><select class="uplan" data-id="'+u.id+'" onchange="changePlan(this)">'+opts+'</select></div>'
+        +'</div>';
+    }).join('')+'<p class="hint" style="margin-top:14px">Le débit par carte n\x27est pas branché : '
+    +'l\x27activation se fait ici, après réception du paiement.</p></div>';
+}
+
+async function changePlan(sel){
+  var id=sel.dataset.id, p=sel.value, avant=sel.getAttribute('data-avant')||'';
+  if(!confirm('Passer ce compte en formule '+PLAN_NOMS[p]+' ?')){ loadUsers(); return; }
+  sel.disabled=true;
+  try{
+    await api({action:'user_plan', userId:id, plan:p});
+    await loadUsers();
+    // si l'admin change sa propre formule, on rafraichit ses droits
+    var m=await loadMe(); if(m) S.me=m;
+    paintNav(); paintQuota();
+  }catch(e){ alert(e.message); loadUsers(); }
+}
+
 function paintDash(){
   if(!S.user) return;
   document.getElementById('uN').textContent=S.user.email;
@@ -1456,7 +1508,7 @@ function paintDash(){
 }
 
 function tab(id,btn){
-  ['ov','ag','pr','se'].forEach(function(x){document.getElementById('t-'+x).classList.toggle('hide',x!==id);});
+  ['ov','ag','pr','us','se'].forEach(function(x){document.getElementById('t-'+x).classList.toggle('hide',x!==id);});
   document.querySelectorAll('.snav button').forEach(function(b){b.setAttribute('aria-selected',String(b===btn));});
 }
 
@@ -1471,7 +1523,8 @@ function pick(p){
   S.plan=p;
   if(!S.user){S.mode='signup';paintAuth();go('auth');}
   else if(S.me&&S.me.isAdmin){ alert("Compte administrateur : toutes les formules sont déjà accessibles."); }
-  else{ alert("Le paiement n'est pas encore actif. Contactez-nous pour activer la formule "+p+"."); }
+  else{ alert("Formule "+p+" : le paiement par carte n'est pas encore branché.\n\n"
+    +"Contactez-nous — nous activons votre accès manuellement dès réception du règlement."); }
 }
 </script>
 </body>
