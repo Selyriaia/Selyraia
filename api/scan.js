@@ -466,7 +466,8 @@ Ton rôle : trouver ce qui EMPÊCHE cette entité d'être comprise, référencé
 Réponds UNIQUEMENT en JSON valide, sans balise de code, sans texte avant ni après :
 {"competitors":["nom1","nom2"],
 "verdict":"une phrase factuelle et directe",
-"findings":[{"title":"titre court du problème",
+"findings":[{"code":"un code de la liste imposée ci-dessous",
+"title":"titre court du problème",
 "severity":"critique|important|ameliorer|optimise",
 "why":"pourquoi ce problème existe, en une phrase",
 "impact":"ce que ça coûte concrètement en clients ou en visibilité",
@@ -478,6 +479,7 @@ Réponds UNIQUEMENT en JSON valide, sans balise de code, sans texte avant ni apr
 
 Règles :
 - "competitors" = noms réellement cités à la place de ${brand}, max ${nbConcurrents}, vide si aucun.
+- "code" est OBLIGATOIRE et doit valoir exactement l'un de : absence_citations (la marque n'apparaît pas dans les réponses), prix_errone (tarif faux, absent ou invérifiable), info_contradictoire (informations divergentes selon les sources), reconnaissance (certification, diplôme ou légitimité non vérifiable), differenciation (positionnement indistinct des concurrents), presence_web (sources et pages insuffisantes pour que les IA comprennent l'entité), avis_reputation (avis clients absents ou négatifs), donnees_structurees (site sans données structurées exploitables), couverture_geo (ancrage local absent), offre_illisible (offre ou services mal décrits). Choisis le code qui correspond le mieux ; n'invente jamais un autre code.
 - "findings" = 3 à 6, classés du plus grave au moins grave. "critique" = empêche vraiment d'être compris ou recommandé ; "important" = réduit nettement la visibilité ; "ameliorer" = optimisation ; "optimise" = point déjà correct. Inclus au moins un "optimise" si quelque chose fonctionne réellement.
 - "steps" = 2 à 5 étapes concrètes, dans l'ordre, que le dirigeant peut exécuter lui-même. Pas de conseil vague.
 - "errors" = uniquement les inexactitudes réellement visibles, vide si aucune.
@@ -584,8 +586,10 @@ Règles :
       const prev = (r2.ok ? await r2.json() : [])[0];
       if (!prev) return ok({ evolution: null });
 
-      // Un probleme est identifie par son titre normalise.
-      const cle = x => String(x && x.title || '').trim().toLowerCase();
+      // Un probleme est identifie par son CODE de categorie, jamais par son
+      // libelle : l'IA reformule a chaque scan, ce qui faisait apparaitre
+      // comme "corriges" des problemes simplement reecrits autrement.
+      const cle = x => String((x && (x.code || x.title)) || '').trim().toLowerCase();
       const avant = (prev.problems || []).map(cle).filter(Boolean);
       const apres = (cur.problems  || []).map(cle).filter(Boolean);
       const corriges = (prev.problems || []).filter(x => cle(x) && !apres.includes(cle(x)));
