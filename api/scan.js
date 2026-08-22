@@ -605,5 +605,122 @@ Règles :
     } catch (e) { return ok({ evolution: null }); }
   }
 
+  /* ═══ Offre Agence ═══════════════════════════════════════════════════ */
+
+  const UUID = /^[0-9a-fA-F-]{36}$/;
+  const sb = (chemin, opts) => fetch(`${SUPABASE_URL}/rest/v1/${chemin}`,
+    Object.assign({ headers: svc(svcKey) }, opts || {}));
+
+  /* ── clients : les marques suivies par cette agence ── */
+  if (action === 'clients') {
+    if (!svcKey || !cap.agency) return ok({ clients: [] });
+    try {
+      const r = await sb(`agency_clients?owner_id=eq.${user.id}&select=*&order=created_at.desc`);
+      return ok({ clients: r.ok ? await r.json() : [] });
+    } catch { return ok({ clients: [] }); }
+  }
+
+  if (action === 'client_add') {
+    if (!cap.agency) return fail("La gestion de marques clientes est réservée à la formule Agence.", 403);
+    if (!svcKey) return fail('Base de données indisponible.', 500);
+    const t = (v, n) => String(v == null ? '' : v).slice(0, n).trim();
+    const row = {
+      owner_id: user.id, name: t(b.name, 120), activity: t(b.activity, 160),
+      city: t(b.city, 80) || null, price: t(b.price, 80) || null,
+      sector: t(b.sector || 'default', 40)
+    };
+    if (row.name.length < 2 || row.activity.length < 2) return fail('Nom et activité requis.', 400);
+    try {
+      const r = await sb('agency_clients', { method: 'POST',
+        headers: { ...svc(svcKey), Prefer: 'return=representation' }, body: JSON.stringify(row) });
+      if (!r.ok) return fail(`Création impossible (${r.status}).`, 500);
+      return ok({ client: (await r.json())[0] || null });
+    } catch (e) { return fail('Création impossible : ' + e.message, 500); }
+  }
+
+  if (action === 'client_del') {
+    if (!cap.agency || !svcKey) return fail('Action non autorisée.', 403);
+    const id = String(b.id || '');
+    if (!UUID.test(id)) return fail('Identifiant invalide.', 400);
+    // Double filtre : on ne supprime jamais la marque d'une autre agence.
+    await sb(`agency_clients?id=eq.${id}&owner_id=eq.${user.id}`, { method: 'DELETE' });
+    return ok({ deleted: true });
+  }
+
+  /* ── interventions : problèmes détectés transformés en prestation ── */
+  if (action === 'interventions') {
+    if (!svcKey) return ok({ interventions: [] });
+    try {
+      // L'admin voit toutes les demandes pour pouvoir les chiffrer.
+      const filtre = admin ? '' : `user_id=eq.${user.id}&`;
+      const r = await sb(`interventions?${filtre}select=*&order=created_at.desc&limit=100`);
+      return ok({ interventions: r.ok ? await r.json() : [], asAdmin: admin });
+    } catch { return ok({ interventions: [] }); }
+  }
+
+  if (action === 'intervention_request') {
+    if (!cap.agency) return fail("La demande de prestation est réservée à la formule Agence.", 403);
+    if (!svcKey) return fail('Base de données indisponible.', 500);
+    const scanId = String(b.scanId || '');
+    if (!UUID.test(scanId)) return fail('Scan invalide.', 400);
+    // Le scan doit appartenir au demandeur.
+    const chk = await sb(`scans?id=eq.${scanId}&user_id=eq.${user.id}&select=id,brand`);
+    const scan = (chk.ok ? await chk.json() : [])[0];
+    if (!scan) return fail('Scan introuvable.', 404);
+
+    const row = {
+      user_id: user.id, scan_id: scanId,
+      client_id: UUID.test(String(b.clientId || '')) ? b.clientId : null,
+      problems: Array.isArray(b.problems) ? b.problems.slice(0, 20) : [],
+      message: String(b.message || '').slice(0, 1000).trim() || null,
+      status: 'requested'
+    };
+    if (!row.problems.length) return fail('Sélectionnez au moins un problème à corriger.', 400);
+    try {
+      const r = await sb('interventions', { method: 'POST',
+        headers: { ...svc(svcKey), Prefer: 'return=representation' }, body: JSON.stringify(row) });
+      if (!r.ok) return fail(`Demande impossible (${r.status}).`, 500);
+      return ok({ intervention: (await r.json())[0] || null });
+    } catch (e) { return fail('Demande impossible : ' + e.message, 500); }
+  }
+
+  /* ── chiffrage : réservé à l'administrateur ── */
+  if (action === 'intervention_quote') {
+    if (!admin) return fail('Action réservée à l\'administrateur.', 403);
+    if (!svcKey) return fail('Base de données indisponible.', 500);
+    const id = String(b.id || '');
+    if (!UUID.test(id)) return fail('Identifiant invalide.', 400);
+    const montant = Number(b.amount);
+    if (!Number.isFinite(montant) || montant <= 0 || montant > 1000000) {
+      return fail('Montant invalide.', 400);
+    }
+    const patch = { quote_amount: Math.round(montant * 100) / 100,
+                    quote_note: String(b.note || '').slice(0, 1000).trim() || null,
+                    status: 'quoted', updated_at: new Date().toISOString() };
+    await sb(`interventions?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
+    return ok({ updated: true });
+  }
+
+  /* ── réponse du client, ou avancement par l'administrateur ── */
+  if (action === 'intervention_status') {
+    if (!svcKey) return fail('Base de données indisponible.', 500);
+    const id = String(b.id || '');
+    if (!UUID.test(id)) return fail('Identifiant invalide.', 400);
+    const vise = String(b.status || '');
+    const permisClient = ['accepted', 'refused'];
+    const permisAdmin  = ['requested', 'quoted', 'accepted', 'refused', 'in_progress', 'done'];
+    const permis = admin ? permisAdmin : permisClient;
+    if (!permis.includes(vise)) return fail('Statut non autorisé.', 403);
+    // Un client ne peut répondre que sur SA demande, et seulement si elle est chiffrée.
+    const filtre = admin ? `id=eq.${id}` : `id=eq.${id}&user_id=eq.${user.id}&status=eq.quoted`;
+    const r = await sb(`interventions?${filtre}`, { method: 'PATCH',
+      headers: { ...svc(svcKey), Prefer: 'return=representation' },
+      body: JSON.stringify({ status: vise, updated_at: new Date().toISOString() }) });
+    const rows = r.ok ? await r.json() : [];
+    if (!rows.length) return fail('Demande introuvable ou non modifiable à ce stade.', 404);
+    return ok({ intervention: rows[0] });
+  }
+
   return fail("Action inconnue.", 400);
+
 } };
