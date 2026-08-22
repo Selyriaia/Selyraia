@@ -257,6 +257,34 @@
     .hscore{font-size:19px}
   }
 
+  @media(max-width:520px){
+    /* pastilles de priorite : 12px passe sous le seuil de lisibilite mobile */
+    .tag{font-size:12.5px;padding:3px 10px}
+    .logo{padding:6px 0}
+    .logo img{width:34px;height:34px;border-radius:10px}
+    .sevchip{font-size:12.5px}
+  }
+
+  /* Rapport PDF : impression via le navigateur, sans dependance externe. */
+  @media print{
+    .glow,header.top,footer,.navbar2,#scanForm,#scanProg,.locked,.admbox,
+    #engBox,#quotaBox,.hc,.asr,#pdfBtn{display:none!important}
+    html,body{background:#fff!important;color:#111!important}
+    .layer{position:static}
+    .wrap{max-width:100%;padding:0}
+    section{padding:0}
+    .panel,.verd,.find,.kp,.pecard{background:#fff!important;border-color:#ccc!important;
+      box-shadow:none!important;break-inside:avoid;page-break-inside:avoid}
+    h2,h3,h4,.vnum,.hscore{color:#111!important}
+    .findline,.ph,.pesub,.pename{color:#333!important}
+    .findline.imp{color:#8a5a00!important}
+    .findline.ver{color:#155e3f!important}
+    .vtxt,.plan li{color:#222!important}
+    .rv{color:#111!important;border-color:#bbb!important;background:#f4f4f5!important}
+    .find{border-left-width:4px!important}
+    a[href]:after{content:''}
+  }
+
   footer{border-top:1px solid var(--ln);padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--dm2)}
 
   @media(max-width:960px){
@@ -1109,6 +1137,11 @@ function showResults(x){
       '<button class="btn b1 lg" onclick="go(\'plans\')">Voir les formules</button></div>';
   }
 
+  if(S.me && S.me.pdf){
+    h+='<div style="margin-top:22px"><button class="btn b2" id="pdfBtn" onclick="exportPdf()">'
+      +'Exporter ce rapport en PDF</button>'
+      +'<p class="hint">Choisissez « Enregistrer au format PDF » comme destination.</p></div>';
+  }
   var box=document.getElementById('scanRes');
   box.innerHTML=h; box.classList.remove('hide');
   box.scrollIntoView({behavior:'smooth'});
@@ -1192,6 +1225,15 @@ async function openScan(id){
                 actions:sc.actions||[],errors:sc.errors||[]}};
     S.last=data; go('scan'); paintQuota(); showResults(data); paintEvolution(id);
   }catch(e){ alert(e.message||"Scan introuvable."); }
+}
+
+// Le navigateur sait produire un PDF : pas de bibliotheque, pas de serveur.
+function exportPdf(){
+  var t=document.title;
+  document.title='Selyraia - '+((S.last&&S.last.brand)||'rapport')+' - '
+    +new Date().toLocaleDateString('fr-FR');
+  window.print();
+  setTimeout(function(){ document.title=t; }, 800);
 }
 
 function paintDash(){
