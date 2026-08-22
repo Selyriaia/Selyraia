@@ -201,6 +201,14 @@
   .snav button:hover{background:var(--sf);color:var(--tx)}
   .snav button[aria-selected=true]{background:var(--sf2);color:var(--tx);font-weight:500}
 
+  .alertbox{padding:13px 15px;border-radius:11px;margin-bottom:16px;font-size:15px;
+    background:rgba(255,107,107,.09);border:1px solid rgba(255,107,107,.3);color:#FFC9C9}
+  .evlist{list-style:none;margin:6px 0 16px;display:flex;flex-direction:column;gap:7px}
+  .evlist li{font-size:15px;padding-left:22px;position:relative;color:var(--dm);line-height:1.5}
+  .evlist li::before{position:absolute;left:0;top:0}
+  .evlist.evok li::before{content:'\2713';color:var(--ok)}
+  .evlist.evbad li::before{content:'\2022';color:var(--bad);font-size:20px;line-height:1}
+
   .sevbar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
   .sevchip{font-size:13px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--ln)}
   .find{border-left:3px solid var(--ln2);padding:16px 0 16px 16px;margin-bottom:14px;background:var(--bg2);
@@ -972,6 +980,7 @@ async function runScan(){
     loadHistory();
     paintNav(); paintQuota(); paintDash();
     showResults(data);
+    paintEvolution(data.id);
   }catch(err){
     e.textContent=err.message||"Le scan n a pas abouti.";
     e.classList.remove('hide');
@@ -1105,6 +1114,42 @@ function showResults(x){
   box.scrollIntoView({behavior:'smooth'});
 }
 
+async function paintEvolution(id){
+  if(!id || !(S.me && S.me.history)) return;
+  try{
+    var r=await api({action:'compare',id:id}), ev=r.evolution;
+    if(!ev) return;
+    var d=ev.delta;
+    var fleche = d>0 ? ('&#9650; +'+d) : (d<0 ? ('&#9660; '+d) : '=');
+    var coul = d>0 ? 'var(--ok)' : (d<0 ? 'var(--bad)' : 'var(--dm2)');
+    var h='<div class="panel" id="evolPanel">';
+    if(ev.alert){
+      h+='<div class="alertbox">&#9888; Alerte visibilite : votre score a chute de '
+        +Math.abs(d)+' points depuis le scan precedent.</div>';
+    }
+    h+='<h3>Evolution depuis le dernier scan</h3>'
+      +'<p class="ph">Scan precedent du '+new Date(ev.previousAt).toLocaleDateString('fr-FR')
+      +' &middot; score '+ev.previousScore+' &rarr; '+ev.score
+      +' <b style="color:'+coul+'">'+fleche+'</b></p>';
+    if((ev.fixed||[]).length){
+      h+='<p class="findline"><b>Problemes corriges</b></p><ul class="evlist evok">'
+        +ev.fixed.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>';
+    }
+    if((ev.appeared||[]).length){
+      h+='<p class="findline"><b>Nouveaux problemes</b></p><ul class="evlist evbad">'
+        +ev.appeared.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>';
+    }
+    if(!(ev.fixed||[]).length && !(ev.appeared||[]).length){
+      h+='<p class="ph">Aucun changement dans les problemes detectes.</p>';
+    }
+    h+='</div>';
+    var box=document.getElementById('scanRes');
+    var vieux=document.getElementById('evolPanel'); if(vieux) vieux.remove();
+    var titre=box.querySelector('h2');
+    if(titre) titre.insertAdjacentHTML('afterend', h); else box.insertAdjacentHTML('afterbegin', h);
+  }catch(e){}
+}
+
 async function loadHistory(){
   try{ var r=await api({action:'history'}); S.history=r.scans||[]; }
   catch(e){ S.history=[]; }
@@ -1145,7 +1190,7 @@ async function openScan(id){
       locked:!(S.me&&S.me.fixes),
       analysis:{competitors:sc.competitors||[],verdict:sc.verdict,findings:sc.problems||[],
                 actions:sc.actions||[],errors:sc.errors||[]}};
-    S.last=data; go('scan'); paintQuota(); showResults(data);
+    S.last=data; go('scan'); paintQuota(); showResults(data); paintEvolution(id);
   }catch(e){ alert(e.message||"Scan introuvable."); }
 }
 
