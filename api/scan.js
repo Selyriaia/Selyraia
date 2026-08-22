@@ -201,7 +201,7 @@ async function ask(name, prompt, mx, json) {
 /* ─── Questions par secteur ─────────────────────────────────────────────── */
 
 // Extrait un objet JSON d'une reponse de modele, en reparant les defauts courants.
-function (raw) {
+function looseParse(raw) {
   if (!raw) return null;
   let t = String(raw).replace(/```json|```/g, '').trim();
   const a = t.indexOf('{'), b = t.lastIndexOf('}');
