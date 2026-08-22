@@ -28,7 +28,7 @@ const ENGINES = {
   mistral: { label: 'Mistral', env: 'MISTRAL_API_KEY',   model: 'mistral-small-latest',  free: true  },
   claude:  { label: 'Claude',  env: 'ANTHROPIC_API_KEY', model: 'claude-sonnet-5',       free: false },
   openai:  { label: 'GPT',     env: 'OPENAI_API_KEY',    model: 'gpt-5.6-luna',          free: false },
-  gemini:  { label: 'Gemini',  env: 'GEMINI_API_KEY',    model: 'gemini-2.5-flash-lite', free: false }
+  gemini:  { label: 'Gemini',  env: 'GEMINI_API_KEY',    model: 'gemini-3.5-flash-lite', free: false }
 };
 
 const QUOTAS = { free: 1, plus: 40, pro: 200, agence: 2000, admin: 999999 };
