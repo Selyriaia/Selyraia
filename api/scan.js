@@ -102,6 +102,20 @@ async function rollPeriod(profile, key) {
   } catch { return profile; }
 }
 
+// Enregistre un scan termine. Ecriture reservee au serveur (cle service).
+async function saveScan(row, key) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/scans`, {
+      method: 'POST',
+      headers: { ...svc(key), Prefer: 'return=representation' },
+      body: JSON.stringify(row)
+    });
+    if (!r.ok) return { _err: `enregistrement ${r.status}: ${(await r.text()).slice(0, 180)}` };
+    const made = await r.json();
+    return made[0] || null;
+  } catch (e) { return { _err: 'Enregistrement impossible : ' + e.message }; }
+}
+
 /* ─── Fournisseurs ──────────────────────────────────────────────────────── */
 
 async function callMistral(p, k, m, mx, json) {
@@ -370,6 +384,65 @@ Règles : "competitors" = noms réellement cités à la place de ${brand}, max 5
       } catch (e) { warn = String(e.message || e).slice(0, 300); break; }
     }
     return ok({ analysis, warning: analysis ? null : warn });
+  }
+
+  /* ── save : conserve le scan termine pour l historique ── */
+  if (action === 'save') {
+    if (!svcKey) return fail('Base de donnees indisponible.', 500);
+    const d = b.data || {};
+    const txt = (v, n) => String(v == null ? '' : v).slice(0, n);
+    const row = {
+      user_id: user.id,
+      brand: txt(d.brand, 120).trim(),
+      activity: txt(d.activity, 160).trim(),
+      city: txt(d.city, 80).trim() || null,
+      price: txt(d.price, 80).trim() || null,
+      sector: txt(d.sector || 'default', 40),
+      plan,
+      engines: Array.isArray(d.engines) ? d.engines.slice(0, 4).map(e => txt(e, 20)) : [],
+      question_count: Number(d.questionCount) || 0,
+      score: Number.isFinite(+d.score) ? Math.round(+d.score) : null,
+      margin: Number.isFinite(+d.margin) ? Math.round(+d.margin) : null,
+      hits: Number(d.hits) || 0,
+      blind_total: Number(d.blindTotal) || 0,
+      per_engine: (d.perEngine && typeof d.perEngine === 'object') ? d.perEngine : {},
+      competitors: Array.isArray(d.competitors) ? d.competitors.slice(0, 10).map(c => txt(c, 80)) : [],
+      verdict: d.verdict ? txt(d.verdict, 600) : null,
+      answers: Array.isArray(d.answers) ? d.answers.slice(0, 80) : [],
+      problems: Array.isArray(d.problems) ? d.problems.slice(0, 20) : [],
+      actions: Array.isArray(d.actions) ? d.actions.slice(0, 20) : [],
+      errors: Array.isArray(d.errors) ? d.errors.slice(0, 20) : []
+    };
+    if (row.brand.length < 2) return fail('Scan incomplet.', 400);
+    const saved = await saveScan(row, svcKey);
+    if (saved && saved._err) return fail(saved._err, 500);
+    return ok({ id: saved ? saved.id : null });
+  }
+
+  /* ── history : uniquement les scans de l appelant ── */
+  if (action === 'history') {
+    if (!svcKey) return ok({ scans: [] });
+    try {
+      const q = `${SUPABASE_URL}/rest/v1/scans?user_id=eq.${user.id}`
+        + `&select=id,created_at,brand,activity,city,score,margin,hits,blind_total,engines,plan`
+        + `&order=created_at.desc&limit=50`;
+      const r = await fetch(q, { headers: svc(svcKey) });
+      return ok({ scans: r.ok ? await r.json() : [] });
+    } catch { return ok({ scans: [] }); }
+  }
+
+  /* ── detail : filtre sur id ET user_id, donc jamais le scan d autrui ── */
+  if (action === 'detail') {
+    if (!svcKey) return fail('Base de donnees indisponible.', 500);
+    const id = String(b.id || '');
+    if (!/^[0-9a-fA-F-]{36}$/.test(id)) return fail('Identifiant invalide.', 400);
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/scans?id=eq.${id}&user_id=eq.${user.id}&select=*`,
+                            { headers: svc(svcKey) });
+      const rows = r.ok ? await r.json() : [];
+      if (!rows.length) return fail('Scan introuvable.', 404);
+      return ok({ scan: rows[0] });
+    } catch (e) { return fail('Lecture impossible : ' + e.message, 500); }
   }
 
   return fail("Action inconnue.", 400);
