@@ -31,17 +31,31 @@ const ENGINES = {
   gemini:  { label: 'Gemini',  env: 'GEMINI_API_KEY',    model: 'gemini-3.5-flash-lite', free: false }
 };
 
-const QUOTAS = { free: 1, plus: 40, pro: 200, agence: 2000, admin: 999999 };
-
-// Moteurs inclus dans chaque formule. Le gratuit reste sur Mistral (coût quasi nul).
-const ENGINE_ACCESS = {
-  free:   ['mistral'],
-  plus:   ['mistral', 'claude', 'gemini'],
-  pro:    ['mistral', 'claude', 'gemini', 'openai'],
-  agence: ['mistral', 'claude', 'gemini', 'openai'],
-  admin:  ['mistral', 'claude', 'gemini', 'openai']
+// Grille des formules. Elle doit correspondre EXACTEMENT à la page tarifaire :
+// toute capacité affichée commercialement se lit ici, et nulle part ailleurs.
+const PLANS = {
+  free: {
+    label: 'Découverte', questions: 8,  engines: ['mistral'],
+    competitors: 0, actions: 2,  everyHours: null, oneShot: true,
+    history: false, alerts: false, pdf: false, agency: false
+  },
+  plus: {
+    label: 'Plus', questions: 20, engines: ['mistral', 'claude', 'gemini'],
+    competitors: 2, actions: 5,  everyHours: 48, oneShot: false,
+    history: true,  alerts: false, pdf: false, agency: false
+  },
+  pro: {
+    label: 'Pro', questions: 60, engines: ['mistral', 'claude', 'gemini', 'openai'],
+    competitors: 5, actions: 10, everyHours: 24, oneShot: false,
+    history: true,  alerts: true, pdf: true,  agency: false
+  },
+  agence: {
+    label: 'Agence', questions: 60, engines: ['mistral', 'claude', 'gemini', 'openai'],
+    competitors: 5, actions: 10, everyHours: 24, oneShot: false,
+    history: true,  alerts: true, pdf: true,  agency: true
+  }
 };
-const enginesFor = p => ENGINE_ACCESS[p] || ENGINE_ACCESS.free;
+const planOf = p => PLANS[p] || PLANS.free;
 
 // Les quotas payants se rechargent tous les 30 jours. Le gratuit ne se recharge
 // jamais : c'est « un scan offert par compte », pas un scan par mois.
@@ -187,52 +201,89 @@ function looseParse(raw) {
   return null;
 }
 
-function questions(d) {
+// Banque d'intentions d'achat par secteur : ce sont les vraies questions que
+// pose un client, jamais le nom de la marque. Croisée avec les variantes, elle
+// fournit 8, 20 ou 60 questions distinctes selon la formule.
+const INTENTS = {
+  default: [
+    [3.0, (a, w) => `Quel est le meilleur ${a}${w} ? Cite des noms précis.`],
+    [3.0, (a, w) => `Où faire du ${a}${w} ? Quels prestataires recommandes-tu ?`],
+    [2.6, (a, w) => `Quels professionnels du ${a} sont les plus recommandés${w} ?`],
+    [2.5, (a, w) => `Je cherche un ${a} sérieux${w}, lequel choisir et pourquoi ?`],
+    [2.2, (a, w) => `Quel ${a} offre le meilleur rapport qualité-prix${w} ?`],
+    [2.0, (a, w) => `Quels sont les ${a} les mieux notés${w} ?`],
+    [1.8, (a, w) => `Vers qui se tourner pour du ${a}${w} quand on débute ?`],
+    [1.7, (a, w) => `Quelles sont les alternatives connues en ${a}${w} ?`],
+    [1.5, (a, w) => `Comment bien choisir son ${a}${w} ? Donne des exemples concrets.`],
+    [1.4, (a, w) => `Quel ${a}${w} pour une demande exigeante ?`],
+    [1.2, (a, w) => `Quels ${a}${w} évitent les mauvaises surprises ?`],
+    [1.1, (a, w) => `Quel ${a}${w} conseillerais-tu à un proche ?`]
+  ],
+  school: [
+    [3.0, (a, w) => `Quelle école ou quel organisme choisir pour se former en ${a}${w} ? Cite des noms.`],
+    [3.0, (a, w) => `Quelle est la meilleure formation en ${a}${w} ?`],
+    [2.6, (a, w) => `Quels établissements ${a} sont les mieux reconnus par les employeurs${w} ?`],
+    [2.5, (a, w) => `Je veux me reconvertir en ${a}${w}, quelle école choisir et pourquoi ?`],
+    [2.2, (a, w) => `Quelle formation ${a} offre le meilleur taux d'insertion professionnelle${w} ?`],
+    [2.0, (a, w) => `Quelles écoles ${a} sont éligibles au CPF ou à une alternance${w} ?`],
+    [1.8, (a, w) => `Quelle formation ${a}${w} pour un débutant complet ?`],
+    [1.7, (a, w) => `Quelles alternatives aux grandes écoles pour ${a}${w} ?`],
+    [1.5, (a, w) => `Comment comparer les formations ${a}${w} ? Donne des exemples.`],
+    [1.4, (a, w) => `Quelle formation ${a}${w} a la meilleure réputation ?`],
+    [1.2, (a, w) => `Quelles écoles ${a}${w} sont à éviter et lesquelles privilégier ?`],
+    [1.1, (a, w) => `Quel diplôme en ${a}${w} vaut vraiment l'investissement ?`]
+  ],
+  creator: [
+    [3.0, (a, w) => `Quels créateurs de contenu français suivre en ${a} ? Cite des noms précis.`],
+    [3.0, (a, w) => `Quelle chaîne ou quel compte suivre pour du ${a} en français ?`],
+    [2.6, (a, w) => `Quels créateurs ${a} sont les plus recommandés ?`],
+    [2.5, (a, w) => `Je débute et je cherche du contenu ${a} de qualité, qui me conseilles-tu ?`],
+    [2.2, (a, w) => `Quels créateurs ${a} francophones ont le plus d'influence ?`],
+    [2.0, (a, w) => `Où trouver du bon contenu ${a} en français ?`],
+    [1.8, (a, w) => `Quels créateurs ${a} sont les plus fiables et les mieux documentés ?`],
+    [1.7, (a, w) => `Quelles alternatives aux gros créateurs ${a} francophones ?`],
+    [1.5, (a, w) => `Quels comptes ${a} suivre pour progresser vraiment ?`],
+    [1.4, (a, w) => `Quels créateurs ${a} montent le plus en ce moment ?`],
+    [1.2, (a, w) => `Quels créateurs ${a} conseillerais-tu à un ami ?`],
+    [1.1, (a, w) => `Quels créateurs ${a} produisent le contenu le plus sérieux ?`]
+  ],
+  media: [
+    [3.0, (a, w) => `Quels médias suivre pour du ${a}${w} ? Cite des noms.`],
+    [3.0, (a, w) => `Quel média est la référence en ${a} en France ?`],
+    [2.6, (a, w) => `Quels sont les médias ${a} les plus fiables ?`],
+    [2.5, (a, w) => `Où s'informer sérieusement sur ${a} ?`],
+    [2.2, (a, w) => `Quels médias français traitent le mieux de ${a} ?`],
+    [2.0, (a, w) => `Quelles alternatives aux grands médias pour ${a} ?`],
+    [1.8, (a, w) => `Quels médias ${a} pour un lecteur exigeant ?`],
+    [1.7, (a, w) => `Quels médias ${a} sont les plus indépendants ?`],
+    [1.5, (a, w) => `Comment choisir sa source d'information en ${a} ?`],
+    [1.4, (a, w) => `Quels médias ${a} sont les plus consultés ?`],
+    [1.2, (a, w) => `Quels médias ${a} recommanderais-tu à un proche ?`],
+    [1.1, (a, w) => `Quels médias ${a} évitent les approximations ?`]
+  ]
+};
+
+// Nuances ajoutées au complément de lieu : elles changent réellement la réponse
+// de l'IA sans dénaturer l'intention, et permettent de monter jusqu'à 60 questions.
+const VARIANTS = ['', ' en 2026', ' avec de très bons retours', ' pour un budget serré', ' pour un projet exigeant'];
+
+function questions(d, count) {
   const { brand, activity, city, type } = d;
-  const w = city ? ` à ${city}` : ' en France';
-  const sets = {
-    creator: [
-      { q: `Quels créateurs de contenu français suivre en ${activity} ? Cite des noms précis.`, named: false, weight: 3 },
-      { q: `Quelle chaîne ou quel compte suivre pour du ${activity} en français ?`, named: false, weight: 3 },
-      { q: `Quels créateurs ${activity} sont les plus recommandés en 2026 ?`, named: false, weight: 2.5 },
-      { q: `Je débute et je cherche du contenu ${activity} de qualité, qui me conseilles-tu ?`, named: false, weight: 2.5 },
-      { q: `Quels créateurs ${activity} francophones ont le plus d'influence ?`, named: false, weight: 2 },
-      { q: `Où trouver du bon contenu ${activity} en français ?`, named: false, weight: 1.5 },
-      { q: `Que vaut ${brand} ? Que fait cette chaîne ou cette personne exactement ?`, named: true, weight: 0 },
-      { q: `Quelle est l'audience, la notoriété et la réputation de ${brand} ?`, named: true, weight: 0 }
-    ],
-    media: [
-      { q: `Quels médias suivre pour du ${activity}${w} ? Cite des noms.`, named: false, weight: 3 },
-      { q: `Quel média est la référence en ${activity} en France ?`, named: false, weight: 3 },
-      { q: `Quels sont les médias ${activity} les plus fiables en 2026 ?`, named: false, weight: 2.5 },
-      { q: `Où s'informer sérieusement sur ${activity} ?`, named: false, weight: 2.5 },
-      { q: `Quels médias français traitent le mieux de ${activity} ?`, named: false, weight: 2 },
-      { q: `Quelles alternatives aux grands médias pour ${activity} ?`, named: false, weight: 1.5 },
-      { q: `Que vaut ${brand} comme média ? Quelle est sa ligne éditoriale ?`, named: true, weight: 0 },
-      { q: `Quelle est l'audience de ${brand} et sa réputation ?`, named: true, weight: 0 }
-    ],
-    school: [
-      { q: `Quelle école ou quel organisme choisir pour se former en ${activity}${w} ? Cite des noms.`, named: false, weight: 3 },
-      { q: `Quelle est la meilleure formation en ${activity}${w} ? Laquelle recommandes-tu ?`, named: false, weight: 3 },
-      { q: `Quels établissements ${activity} sont les mieux reconnus par les employeurs${w} ?`, named: false, weight: 2.5 },
-      { q: `Je veux me reconvertir en ${activity}${w}, quelle école choisir et pourquoi ?`, named: false, weight: 2.5 },
-      { q: `Quelle formation ${activity} offre le meilleur taux d'insertion professionnelle${w} ?`, named: false, weight: 2 },
-      { q: `Quelles écoles ${activity} sont éligibles au CPF ou à une alternance${w} ?`, named: false, weight: 1.5 },
-      { q: `Que vaut ${brand} ? Quels diplômes délivre cet établissement et à quel prix ?`, named: true, weight: 0 },
-      { q: `Quels sont les frais de scolarité, la reconnaissance et la réputation de ${brand} ?`, named: true, weight: 0 }
-    ],
-    default: [
-      { q: `Quel est le meilleur ${activity}${w} ? Cite des noms précis.`, named: false, weight: 3 },
-      { q: `Où faire du ${activity}${w} ? Quels prestataires recommandes-tu ?`, named: false, weight: 3 },
-      { q: `Quels organismes ou entreprises de ${activity} sont les plus recommandés${w} en 2026 ?`, named: false, weight: 2.5 },
-      { q: `Je cherche un ${activity} sérieux${w}, lequel choisir et pourquoi ?`, named: false, weight: 2.5 },
-      { q: `Quel ${activity} offre le meilleur rapport qualité-prix${w} ?`, named: false, weight: 2 },
-      { q: `Comment bien choisir son ${activity}${w} ? Donne des exemples concrets.`, named: false, weight: 1.5 },
-      { q: `Que vaut ${brand} ? Est-ce sérieux ? Que proposent-ils et à quel prix ?`, named: true, weight: 0 },
-      { q: `Quels sont les tarifs, conditions et la réputation de ${brand} ?`, named: true, weight: 0 }
-    ]
-  };
-  return sets[type] || sets.default;
+  const base = city ? ` à ${city}` : ' en France';
+  const bank = INTENTS[type] || INTENTS.default;
+  const target = Math.max(6, Number(count) || 8) - 2;   // 2 questions de contrôle
+  const out = [];
+  for (let v = 0; v < VARIANTS.length && out.length < target; v++) {
+    for (let i = 0; i < bank.length && out.length < target; i++) {
+      const [weight, tpl] = bank[i];
+      out.push({ q: tpl(activity, base + VARIANTS[v]), named: false,
+                 weight: Math.round(weight * (1 - v * 0.12) * 100) / 100 });
+    }
+  }
+  // Questions de contrôle : le nom est cité, elles ne comptent pas dans le score.
+  out.push({ q: `Que vaut ${brand} ? Que proposent-ils exactement et à quel prix ?`, named: true, weight: 0 });
+  out.push({ q: `Quels sont les tarifs, les conditions et la réputation de ${brand} ?`, named: true, weight: 0 });
+  return out;
 }
 
 /* ─── Entrée ────────────────────────────────────────────────────────────── */
@@ -285,33 +336,54 @@ export default { async fetch(request) {
 
   if (!admin && svcKey && !dbError) profile = await rollPeriod(profile, svcKey);
 
-  const plan = admin ? 'admin' : (profile.plan || 'free');
-  const quota = QUOTAS[plan] ?? 1;
-  const used = admin ? 0 : (profile.scans_used || 0);
-  const allowed = enginesFor(plan);
+  // L'admin peut endosser n'importe quelle formule pour la parcourir comme un client.
+  const realPlan = profile.plan || 'free';
+  const sim = (admin && PLANS[b.simulate]) ? b.simulate : null;
+  const plan = sim || (admin ? 'agence' : realPlan);
+  const cap = planOf(plan);
+  const used = profile.scans_used || 0;
+
+  // Fréquence réelle : le gratuit est un scan à vie, les payants un scan toutes les N heures.
+  const lastAt = profile.last_scan_at ? Date.parse(profile.last_scan_at) : 0;
+  const nextAt = (cap.everyHours && lastAt) ? lastAt + cap.everyHours * 3600000 : 0;
+  const waiting   = !admin && !!cap.everyHours && Date.now() < nextAt;
+  const exhausted = !admin && cap.oneShot && used >= 1;
+
+  // Un moteur n'est proposé que si sa clé est réellement présente.
+  const allowed = cap.engines.filter(e => !!process.env[ENGINES[e].env]);
 
   /* ── me ── */
   if (action === 'me') {
-    return ok({ email: user.email, plan, isAdmin: admin, scansUsed: used, quota,
-                canScan: admin || used < quota, engines: allowed,
-                dbError: admin ? dbError : null });
+    return ok({
+      email: user.email, isAdmin: admin, plan, realPlan, simulating: sim, label: cap.label,
+      engines: allowed, questions: cap.questions, competitors: cap.competitors,
+      actions: cap.actions, history: cap.history, alerts: cap.alerts,
+      pdf: cap.pdf, agency: cap.agency, everyHours: cap.everyHours, oneShot: cap.oneShot,
+      scansUsed: used, nextScanAt: nextAt || null,
+      canScan: admin || (!waiting && !exhausted),
+      plans: Object.keys(PLANS).map(k => ({ key: k, label: PLANS[k].label })),
+      dbError: admin ? dbError : null
+    });
   }
 
   if (b.engine && !allowed.includes(b.engine)) {
     return fail("Ce moteur n'est pas inclus dans votre formule.", 403);
   }
-  const engine = (ENGINES[b.engine] && allowed.includes(b.engine)) ? b.engine : 'mistral';
+  const engine = (ENGINES[b.engine] && allowed.includes(b.engine)) ? b.engine : (allowed[0] || 'mistral');
   if (!process.env[ENGINES[engine].env]) {
     return fail(`Clé ${ENGINES[engine].env} absente des variables d'environnement Vercel.`, 500);
   }
 
   /* ── start : valide, consomme le quota, renvoie les questions ── */
   if (action === 'start') {
-    if (!admin && used >= quota) {
-      return fail(plan === 'free'
-        ? "Votre scan gratuit a déjà été utilisé sur ce compte. Choisissez une formule pour continuer."
-        : "Vous avez atteint le quota de scans de votre formule.", 403);
+    if (exhausted) {
+      return fail("Votre scan gratuit a déjà été utilisé sur ce compte. Choisissez une formule pour continuer.", 403);
     }
+    if (waiting) {
+      const h = Math.max(1, Math.ceil((nextAt - Date.now()) / 3600000));
+      return fail(`La formule ${cap.label} autorise un scan toutes les ${cap.everyHours} h. Prochain scan possible dans ${h} h.`, 403);
+    }
+    if (!allowed.length) return fail("Aucun moteur disponible : clé API manquante.", 500);
     const d = {
       brand: String(b.brand || '').slice(0, 120).trim(),
       activity: String(b.activity || '').slice(0, 160).trim(),
@@ -323,10 +395,12 @@ export default { async fetch(request) {
     if (!admin && svcKey) await bump(user.id, used, svcKey);
 
     return ok({
-      questions: questions(d),
-      engine, engineLabel: ENGINES[engine].label,
-      plan, isAdmin: admin,
-      scansUsed: admin ? 0 : used + 1, quota
+      questions: questions(d, cap.questions),
+      engines: allowed,
+      engineLabels: allowed.reduce((o, e) => (o[e] = ENGINES[e].label, o), {}),
+      plan, label: cap.label, isAdmin: admin, simulating: sim,
+      competitors: cap.competitors, actionsMax: cap.actions,
+      scansUsed: admin ? used : used + 1
     });
   }
 
