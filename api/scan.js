@@ -378,6 +378,16 @@ export default { async fetch(request) {
     });
   }
 
+  // Un scan doit avoir ete reellement demarre pour que ask/analyze repondent.
+  // Sans cela, un compte gratuit ayant epuise son scan pouvait continuer a
+  // consommer les cles API indefiniment.
+  if ((action === 'ask' || action === 'analyze') && !admin) {
+    const FENETRE_MS = 20 * 60 * 1000;
+    if (!lastAt || Date.now() - lastAt > FENETRE_MS) {
+      return fail("Aucun scan en cours. Relancez un scan depuis la page prevue.", 403);
+    }
+  }
+
   if (b.engine && !allowed.includes(b.engine)) {
     return fail("Ce moteur n'est pas inclus dans votre formule.", 403);
   }
@@ -552,6 +562,43 @@ Règles :
       if (!rows.length) return fail('Scan introuvable.', 404);
       return ok({ scan: rows[0] });
     } catch (e) { return fail('Lecture impossible : ' + e.message, 500); }
+  }
+
+  /* ── compare : evolution par rapport au scan precedent de la meme marque ── */
+  if (action === 'compare') {
+    if (!svcKey || !cap.history) return ok({ evolution: null });
+    const id = String(b.id || '');
+    if (!/^[0-9a-fA-F-]{36}$/.test(id)) return fail('Identifiant invalide.', 400);
+    try {
+      // Double filtre id + user_id : la cle service contourne la RLS.
+      const r1 = await fetch(`${SUPABASE_URL}/rest/v1/scans?id=eq.${id}&user_id=eq.${user.id}&select=*`,
+                             { headers: svc(svcKey) });
+      const cur = (r1.ok ? await r1.json() : [])[0];
+      if (!cur) return fail('Scan introuvable.', 404);
+
+      const q = `${SUPABASE_URL}/rest/v1/scans?user_id=eq.${user.id}`
+        + `&brand=eq.${encodeURIComponent(cur.brand)}`
+        + `&created_at=lt.${encodeURIComponent(cur.created_at)}`
+        + `&select=id,created_at,score,problems&order=created_at.desc&limit=1`;
+      const r2 = await fetch(q, { headers: svc(svcKey) });
+      const prev = (r2.ok ? await r2.json() : [])[0];
+      if (!prev) return ok({ evolution: null });
+
+      // Un probleme est identifie par son titre normalise.
+      const cle = x => String(x && x.title || '').trim().toLowerCase();
+      const avant = (prev.problems || []).map(cle).filter(Boolean);
+      const apres = (cur.problems  || []).map(cle).filter(Boolean);
+      const corriges = (prev.problems || []).filter(x => cle(x) && !apres.includes(cle(x)));
+      const nouveaux = (cur.problems  || []).filter(x => cle(x) && !avant.includes(cle(x)));
+      const delta = (cur.score == null || prev.score == null) ? null : cur.score - prev.score;
+
+      return ok({ evolution: {
+        previousAt: prev.created_at, previousScore: prev.score, score: cur.score, delta,
+        fixed: corriges.map(x => x.title).slice(0, 12),
+        appeared: nouveaux.map(x => x.title).slice(0, 12),
+        alert: !!cap.alerts && delta !== null && delta <= -10
+      }});
+    } catch (e) { return ok({ evolution: null }); }
   }
 
   return fail("Action inconnue.", 400);
