@@ -36,23 +36,24 @@ const ENGINES = {
 const PLANS = {
   free: {
     label: 'Découverte', questions: 8,  engines: ['mistral'],
-    competitors: 0, actions: 2,  everyHours: null, oneShot: true,
-    history: false, alerts: false, pdf: false, agency: false
+    competitors: 0, actions: 0,  everyHours: null, oneShot: true,
+    // Le gratuit montre les problèmes, jamais la façon de les corriger.
+    fixes: false, history: false, alerts: false, pdf: false, agency: false
   },
   plus: {
     label: 'Plus', questions: 20, engines: ['mistral', 'claude', 'gemini'],
     competitors: 2, actions: 5,  everyHours: 48, oneShot: false,
-    history: true,  alerts: false, pdf: false, agency: false
+    fixes: true, history: true,  alerts: false, pdf: false, agency: false
   },
   pro: {
     label: 'Pro', questions: 60, engines: ['mistral', 'claude', 'gemini', 'openai'],
     competitors: 5, actions: 10, everyHours: 24, oneShot: false,
-    history: true,  alerts: true, pdf: true,  agency: false
+    fixes: true, history: true,  alerts: true, pdf: true,  agency: false
   },
   agence: {
     label: 'Agence', questions: 60, engines: ['mistral', 'claude', 'gemini', 'openai'],
     competitors: 5, actions: 10, everyHours: 24, oneShot: false,
-    history: true,  alerts: true, pdf: true,  agency: true
+    fixes: true, history: true,  alerts: true, pdf: true,  agency: true
   }
 };
 const planOf = p => PLANS[p] || PLANS.free;
@@ -368,7 +369,7 @@ export default { async fetch(request) {
     return ok({
       email: user.email, isAdmin: admin, plan, realPlan, simulating: sim, label: cap.label,
       engines: allowed, questions: cap.questions, competitors: cap.competitors,
-      actions: cap.actions, history: cap.history, alerts: cap.alerts,
+      actions: cap.actions, fixes: !!cap.fixes, history: cap.history, alerts: cap.alerts,
       pdf: cap.pdf, agency: cap.agency, everyHours: cap.everyHours, oneShot: cap.oneShot,
       scansUsed: used, nextScanAt: nextAt || null,
       canScan: admin || (!waiting && !exhausted),
@@ -450,16 +451,27 @@ ${corpus}
 
 L'entité analysée est "${brand}". Elle apparaît dans ${hits} des ${total} questions où son nom n'était PAS mentionné.${price ? ` Son tarif réel est : ${price}.` : ''}
 
-Analyse avec rigueur et sévérité, comme un auditeur : identifie précisément ce qui ne va pas, ne cherche pas à rassurer. Ne minimise aucun problème, mais n'invente rien qui ne soit pas dans les réponses ci-dessus.
+Ton rôle : trouver ce qui EMPÊCHE cette entité d'être comprise, référencée et recommandée par les IA, puis expliquer exactement comment le corriger. Analyse en auditeur sévère : ne cherche pas à rassurer, ne minimise rien, mais n'invente rien qui ne soit pas dans les réponses ci-dessus.
 
 Réponds UNIQUEMENT en JSON valide, sans balise de code, sans texte avant ni après :
 {"competitors":["nom1","nom2"],
 "verdict":"une phrase factuelle et directe",
-"problems":[{"title":"titre court","detail":"explication en une phrase","impact":"conséquence commerciale concrète"}],
+"findings":[{"title":"titre court du problème",
+"severity":"critique|important|ameliorer|optimise",
+"why":"pourquoi ce problème existe, en une phrase",
+"impact":"ce que ça coûte concrètement en clients ou en visibilité",
+"solution":"la correction à apporter, en une phrase",
+"steps":["étape 1 précise et exécutable","étape 2","étape 3"],
+"verify":"ce qui doit changer dans les réponses des IA au prochain scan si c'est corrigé"}],
 "errors":[{"claim":"ce que l'IA affirme d'inexact","reality":"ce qui devrait être dit","gravity":"haute|moyenne|basse"}],
 "actions":[{"title":"action concrète","detail":"comment faire en une phrase","priority":"haute|moyenne|basse"}]}
 
-Règles : "competitors" = noms réellement cités à la place de ${brand}, max ${nbConcurrents}, vide si aucun. "problems" = 2 à 4. "errors" = uniquement les inexactitudes réellement visibles, vide si aucune. "actions" = exactement ${nbActions}, de la plus urgente à la moins urgente.`;
+Règles :
+- "competitors" = noms réellement cités à la place de ${brand}, max ${nbConcurrents}, vide si aucun.
+- "findings" = 3 à 6, classés du plus grave au moins grave. "critique" = empêche vraiment d'être compris ou recommandé ; "important" = réduit nettement la visibilité ; "ameliorer" = optimisation ; "optimise" = point déjà correct. Inclus au moins un "optimise" si quelque chose fonctionne réellement.
+- "steps" = 2 à 5 étapes concrètes, dans l'ordre, que le dirigeant peut exécuter lui-même. Pas de conseil vague.
+- "errors" = uniquement les inexactitudes réellement visibles, vide si aucune.
+- "actions" = exactement ${nbActions}, de la plus urgente à la moins urgente.`;
 
     const RETRY = "\n\nTa reponse precedente n'etait pas du JSON valide. Renvoie UNIQUEMENT l'objet JSON, "
       + "en echappant tout guillemet double place a l'interieur d'une valeur texte.";
@@ -470,7 +482,17 @@ Règles : "competitors" = noms réellement cités à la place de ${brand}, max $
         if (!analysis) warn = "Le moteur n'a pas renvoye de JSON exploitable.";
       } catch (e) { warn = String(e.message || e).slice(0, 300); break; }
     }
-    return ok({ analysis, warning: analysis ? null : warn });
+    // Filtrage côté serveur : sans droit aux corrections, la solution, les
+    // étapes et la vérification ne quittent même pas le serveur. Regarder la
+    // réponse réseau ne permet donc pas de les récupérer.
+    if (analysis && !cap.fixes) {
+      (analysis.findings || []).forEach(f => { delete f.solution; delete f.steps; delete f.verify; });
+      analysis.actions = [];
+    }
+    if (analysis && Array.isArray(analysis.competitors)) {
+      analysis.competitors = analysis.competitors.slice(0, nbConcurrents);
+    }
+    return ok({ analysis, locked: !cap.fixes, warning: analysis ? null : warn });
   }
 
   /* ── save : conserve le scan termine pour l historique ── */
