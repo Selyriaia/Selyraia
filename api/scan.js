@@ -181,9 +181,20 @@ async function ask(name, prompt, mx, json) {
   const e = ENGINES[name];
   const k = process.env[e.env];
   if (!k) throw new Error(`Clé ${e.env} absente des variables d'environnement Vercel.`);
-  const t = await AD[name](prompt, k, e.model, mx || 900, json);
-  if (!t) throw new Error('Réponse vide du modèle');
-  return t;
+  let last = null;
+  for (let essai = 0; essai < 3; essai++) {
+    try {
+      const t = await AD[name](prompt, k, e.model, mx || 900, json);
+      if (t) return t;
+      last = new Error('Réponse vide du modèle');
+    } catch (err) {
+      last = err;
+      // 429 = limite de débit, 5xx = incident passager : on repasse après une pause.
+      if (!/(^|\D)(429|500|502|503|529)(\D|$)/.test(String(err.message))) break;
+      await new Promise(r => setTimeout(r, 900 * (essai + 1)));
+    }
+  }
+  throw last || new Error('Appel impossible');
 }
 
 /* ─── Questions par secteur ─────────────────────────────────────────────── */
@@ -429,6 +440,8 @@ export default { async fetch(request) {
     const corpus = String(b.corpus || '').slice(0, 9000);
     const hits = Number(b.hits) || 0;
     const total = Number(b.total) || 0;
+    const nbActions = cap.actions;                          // 2 / 5 / 10 selon la formule
+    const nbConcurrents = Math.max(3, cap.competitors || 3);
 
     const p =
 `Voici les réponses réelles d'une IA à des questions posées par des clients potentiels du marché "${activity}"${city ? ' à ' + city : ''}.
@@ -446,7 +459,7 @@ Réponds UNIQUEMENT en JSON valide, sans balise de code, sans texte avant ni apr
 "errors":[{"claim":"ce que l'IA affirme d'inexact","reality":"ce qui devrait être dit","gravity":"haute|moyenne|basse"}],
 "actions":[{"title":"action concrète","detail":"comment faire en une phrase","priority":"haute|moyenne|basse"}]}
 
-Règles : "competitors" = noms réellement cités à la place de ${brand}, max 5, vide si aucun. "problems" = 2 à 4. "errors" = uniquement les inexactitudes réellement visibles, vide si aucune. "actions" = exactement 2, les plus prioritaires.`;
+Règles : "competitors" = noms réellement cités à la place de ${brand}, max ${nbConcurrents}, vide si aucun. "problems" = 2 à 4. "errors" = uniquement les inexactitudes réellement visibles, vide si aucune. "actions" = exactement ${nbActions}, de la plus urgente à la moins urgente.`;
 
     const RETRY = "\n\nTa reponse precedente n'etait pas du JSON valide. Renvoie UNIQUEMENT l'objet JSON, "
       + "en echappant tout guillemet double place a l'interieur d'une valeur texte.";
