@@ -721,6 +721,38 @@ Règles :
     return ok({ intervention: rows[0] });
   }
 
+  /* ═══ Gestion des abonnements (administrateur) ═══════════════════════ */
+
+  if (action === 'users_list') {
+    if (!admin) return fail("Réservé à l'administrateur.", 403);
+    if (!svcKey) return fail('Base de données indisponible.', 500);
+    try {
+      const r = await sb('profiles?select=id,email,plan,scans_used,last_scan_at,period_start,created_at'
+                       + '&order=created_at.desc&limit=200');
+      return ok({ users: r.ok ? await r.json() : [] });
+    } catch { return ok({ users: [] }); }
+  }
+
+  if (action === 'user_plan') {
+    if (!admin) return fail("Réservé à l'administrateur.", 403);
+    if (!svcKey) return fail('Base de données indisponible.', 500);
+    const cible = String(b.userId || '');
+    if (!UUID.test(cible)) return fail('Identifiant invalide.', 400);
+    const vise = String(b.plan || '');
+    if (!PLANS[vise]) return fail('Formule inconnue.', 400);
+    // Changer de formule remet la periode a zero : le client repart avec
+    // ses droits pleins, sans heriter du compteur de l'ancienne formule.
+    const patch = { plan: vise, scans_used: 0, period_start: new Date().toISOString() };
+    try {
+      const r = await sb(`profiles?id=eq.${cible}`, { method: 'PATCH',
+        headers: { ...svc(svcKey), Prefer: 'return=representation' }, body: JSON.stringify(patch) });
+      const rows = r.ok ? await r.json() : [];
+      if (!rows.length) return fail('Compte introuvable.', 404);
+      return ok({ user: rows[0] });
+    } catch (e) { return fail('Modification impossible : ' + e.message, 500); }
+  }
+
   return fail("Action inconnue.", 400);
+
 
 } };
