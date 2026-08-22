@@ -201,6 +201,34 @@
   .snav button:hover{background:var(--sf);color:var(--tx)}
   .snav button[aria-selected=true]{background:var(--sf2);color:var(--tx);font-weight:500}
 
+  .sevbar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+  .sevchip{font-size:13px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--ln)}
+  .find{border-left:3px solid var(--ln2);padding:16px 0 16px 16px;margin-bottom:14px;background:var(--bg2);
+    border-radius:0 12px 12px 0}
+  .find.sev-c{border-left-color:var(--bad)}
+  .find.sev-i{border-left-color:var(--wn)}
+  .find.sev-a{border-left-color:#A99BFF}
+  .find.sev-o{border-left-color:var(--ok)}
+  .findhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:10px}
+  .findsev{font-size:12.5px;font-weight:600;white-space:nowrap}
+  .findhead h4{font-size:17.5px;font-weight:600;letter-spacing:-.015em}
+  .findline{font-size:15px;color:var(--dm);margin-bottom:7px;line-height:1.55}
+  .findline b{color:var(--tx);font-weight:600;margin-right:6px}
+  .findline.imp{color:var(--wn)}
+  .findline.ver{color:#9FD9BC}
+  .findfix{margin-top:12px;padding-top:12px;border-top:1px solid var(--ln)}
+  .findsteps{font-size:15px;color:var(--dm);margin:10px 0}
+  .findsteps b{color:var(--tx);font-weight:600}
+  .findsteps ol{margin:8px 0 0 20px;display:flex;flex-direction:column;gap:7px}
+  .findsteps li{line-height:1.5}
+  .findlock{margin-top:12px;padding:12px 14px;border:1px dashed var(--ln2);border-radius:10px;
+    font-size:14.5px;color:var(--dm2);background:var(--sf)}
+  @media(max-width:520px){
+    .find{padding-left:12px}
+    .findhead{gap:6px}
+    .findhead h4{font-size:16px}
+  }
+
   .pegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:6px 0 18px}
   .pecard{padding:14px;background:var(--bg2);border:1px solid var(--ln);border-radius:12px;text-align:center}
   .pename{font-size:13.5px;color:var(--dm2);margin-bottom:8px}
@@ -414,8 +442,8 @@
           <li><span class="m">✓</span> 1 scan, une seule fois</li>
           <li><span class="m">✓</span> 8 questions, 1 moteur</li>
           <li><span class="m">✓</span> Score avec marge</li>
-          <li><span class="m">✓</span> Diagnostic des problèmes</li>
-          <li><span class="m">✓</span> 2 actions prioritaires</li>
+          <li><span class="m">✓</span> Problèmes détectés et classés par gravité</li>
+          <li class="no"><span class="m">×</span> Pas de solution ni d'étapes de correction</li>
           <li class="no"><span class="m">×</span> Pas de suivi dans le temps</li>
         </ul>
         <button class="btn b2 full" onclick="startScan()">Lancer mon scan</button>
@@ -431,6 +459,7 @@
           <li><span class="m">✓</span> Toutes vos erreurs, sans limite</li>
           <li><span class="m">✓</span> Comparaison avec 2 concurrents</li>
           <li><span class="m">✓</span> Historique et évolution</li>
+          <li><span class="m">✓</span> Solution + étapes de correction</li>
           <li><span class="m">✓</span> 5 actions priorisées</li>
         </ul>
         <button class="btn b1 full" onclick="pick('Plus')">Choisir Plus</button>
@@ -905,11 +934,11 @@ async function runScan(){
       return parts.length? ('Q: '+r.q+'\n'+parts.join('\n')) : '';
     }).filter(Boolean).join('\n\n').slice(0,9000);
 
-    var an=null, warn=firstErr;
+    var an=null, warn=firstErr, locked=false;
     try{
       var az=await api({action:'analyze',brand:d.brand,activity:d.activity,city:d.city,price:d.price,
                         corpus:corpus,hits:hits,total:blind.length,engine:ENG[0],simulate:sim});
-      an=az.analysis; if(az.warning&&!warn) warn=az.warning;
+      an=az.analysis; locked=!!az.locked; if(az.warning&&!warn) warn=az.warning;
     }catch(err){ if(!warn) warn=err.message; }
 
     document.getElementById('progBar').style.width='100%';
@@ -917,7 +946,7 @@ async function runScan(){
 
     var data={brand:d.brand,score:score,margin:margin,hits:hits,blindTotal:blind.length,
       engine:ENG.map(function(x){return LAB[x]||x;}).join(', '),
-      perEngine:perEngine,isAdmin:!!st.isAdmin,plan:st.plan,label:st.label,
+      perEngine:perEngine,isAdmin:!!st.isAdmin,plan:st.plan,label:st.label,locked:locked,
       warning:(st.isAdmin&&warn)?warn:(failed?('Certaines requetes n ont pas abouti ('+failed+').'):null),
       results:rows.filter(Boolean).map(function(r){
         return {q:r.q,named:r.named,mentioned:r.mentioned,
@@ -933,7 +962,7 @@ async function runScan(){
         score:score,margin:margin,hits:hits,blindTotal:blind.length,
         perEngine:perEngine,competitors:(an&&an.competitors)||[],
         verdict:(an&&an.verdict)||null,answers:data.results,
-        problems:(an&&an.problems)||[],actions:(an&&an.actions)||[],errors:(an&&an.errors)||[]
+        problems:(an&&(an.findings||an.problems))||[],actions:(an&&an.actions)||[],errors:(an&&an.errors)||[]
       }});
       data.id=sv.id;
     }catch(err){ if(!data.warning) data.warning="Scan affiche mais non enregistre : "+err.message; }
@@ -983,11 +1012,57 @@ function showResults(x){
   }
   h+='</div>';
 
-  if((a.problems||[]).length){
-    h+='<div class="panel"><h3>Ce qui ne va pas</h3><p class="ph">Relevé à partir des réponses obtenues à l\'instant.</p>';
-    a.problems.forEach(function(p,i){
-      h+='<div class="prob"><span class="pn">'+(i+1)+'</span><div><h4>'+esc(p.title)+'</h4><p>'+esc(p.detail)+'</p>'+
-        (p.impact?'<p class="imp">→ '+esc(p.impact)+'</p>':'')+'</div></div>';
+  var SEV={
+    critique:{p:'🔴',l:'Critique',c:'sev-c'},
+    important:{p:'🟠',l:'Important',c:'sev-i'},
+    ameliorer:{p:'🟡',l:'À améliorer',c:'sev-a'},
+    optimise:{p:'🟢',l:'Optimisé',c:'sev-o'}
+  };
+  var finds=a.findings||[];
+  // compatibilité avec les scans enregistrés avant le nouveau format
+  if(!finds.length && (a.problems||[]).length){
+    finds=a.problems.map(function(p){
+      return {title:p.title,severity:'important',why:p.detail,impact:p.impact};
+    });
+  }
+  if(finds.length){
+    var cnt={critique:0,important:0,ameliorer:0,optimise:0};
+    finds.forEach(function(f){ var k=String(f.severity||'important').toLowerCase();
+      if(cnt[k]===undefined) k='important'; cnt[k]++; });
+    h+='<div class="panel"><h3>Ce qui empêche votre marque d\'être recommandée</h3>'
+      +'<p class="ph">Relevé à partir des réponses obtenues à l\'instant, classé par gravité.</p>'
+      +'<div class="sevbar">'
+      +Object.keys(SEV).map(function(k){
+         return '<span class="sevchip '+SEV[k].c+'">'+SEV[k].p+' '+cnt[k]+' '+SEV[k].l+'</span>';
+       }).join('')
+      +'</div>';
+
+    finds.forEach(function(f,i){
+      var k=String(f.severity||'important').toLowerCase();
+      if(!SEV[k]) k='important';
+      h+='<div class="find '+SEV[k].c+'">'
+        +'<div class="findhead"><span class="findsev">'+SEV[k].p+' '+SEV[k].l+'</span>'
+        +'<h4>'+esc(f.title)+'</h4></div>';
+      var pourquoi=f.why||f.detail;
+      if(pourquoi) h+='<p class="findline"><b>Pourquoi</b> '+esc(pourquoi)+'</p>';
+      if(f.impact) h+='<p class="findline imp"><b>Impact</b> '+esc(f.impact)+'</p>';
+
+      if(f.solution || (f.steps||[]).length){
+        h+='<div class="findfix">';
+        if(f.solution) h+='<p class="findline"><b>Solution</b> '+esc(f.solution)+'</p>';
+        if((f.steps||[]).length){
+          h+='<div class="findsteps"><b>Étapes de correction</b><ol>'
+            +f.steps.map(function(st){return '<li>'+esc(st)+'</li>';}).join('')
+            +'</ol></div>';
+        }
+        if(f.verify) h+='<p class="findline ver"><b>Vérification</b> '+esc(f.verify)
+                       +' — relancez un scan pour confirmer.</p>';
+        h+='</div>';
+      } else if(x.locked && k!=='optimise'){
+        h+='<div class="findlock">🔒 Solution, étapes de correction et vérification '
+          +'réservées aux formules payantes.</div>';
+      }
+      h+='</div>';
     });
     h+='</div>';
   }
@@ -1003,7 +1078,7 @@ function showResults(x){
     h+='</div>';
   }
 
-  if((a.actions||[]).length){
+  if((a.actions||[]).length && !x.locked){
     h+='<div class="panel"><h3>Par quoi commencer</h3><p class="ph">Les actions au meilleur rapport effort / impact.</p>';
     a.actions.forEach(function(ac,i){
       h+='<div class="prob"><span class="pn act">'+(i+1)+'</span><div><h4>'+esc(ac.title)+
@@ -1067,7 +1142,8 @@ async function openScan(id){
     var data={brand:sc.brand,score:sc.score,margin:sc.margin,hits:sc.hits,blindTotal:sc.blind_total,
       engine:(sc.engines||[]).join(', ')||'—',isAdmin:!!(S.me&&S.me.isAdmin),warning:null,
       results:sc.answers||[],
-      analysis:{competitors:sc.competitors||[],verdict:sc.verdict,problems:sc.problems||[],
+      locked:!(S.me&&S.me.fixes),
+      analysis:{competitors:sc.competitors||[],verdict:sc.verdict,findings:sc.problems||[],
                 actions:sc.actions||[],errors:sc.errors||[]}};
     S.last=data; go('scan'); paintQuota(); showResults(data);
   }catch(e){ alert(e.message||"Scan introuvable."); }
