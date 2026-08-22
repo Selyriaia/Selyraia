@@ -201,6 +201,18 @@
   .snav button:hover{background:var(--sf);color:var(--tx)}
   .snav button[aria-selected=true]{background:var(--sf2);color:var(--tx);font-weight:500}
 
+  .rival-row{display:grid;grid-template-columns:minmax(90px,1.2fr) 3fr auto;gap:12px;align-items:center;
+    padding:11px 0;border-bottom:1px solid var(--ln)}
+  .rival-row:last-child{border-bottom:0}
+  .rival-nom{font-size:15px;color:#D5D8DE;overflow:hidden;text-overflow:ellipsis}
+  .rival-row.moi .rival-nom{color:var(--tx);font-weight:600}
+  .rival-tag{font-size:11px;padding:2px 7px;border-radius:999px;background:rgba(123,107,255,.16);color:#A99BFF}
+  .rival-bar{height:9px;background:var(--sf2);border-radius:999px;overflow:hidden}
+  .rival-bar i{display:block;height:100%;background:var(--dm2);border-radius:999px}
+  .rival-row.moi .rival-bar i{background:linear-gradient(90deg,var(--ac),var(--ac2))}
+  .rival-val{font-size:14px;color:var(--dm2);font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+  @media(max-width:520px){ .rival-row{grid-template-columns:1fr auto;gap:6px} .rival-bar{grid-column:1/-1} }
+
   .pick{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--ln);
     font-size:15px;color:#D5D8DE;cursor:pointer;line-height:1.5}
   .pick:last-of-type{border-bottom:0}
@@ -430,6 +442,11 @@
       <div class="fld hide" id="clientBox">
         <label class="fl" for="f-client">Scanner pour une marque cliente</label>
         <select id="f-client" onchange="fillFromClient()"></select>
+      </div>
+      <div class="fld hide" id="rivalBox">
+        <label class="fl" for="f-rivals">Concurrents à comparer <span style="color:var(--dm2)" id="rivalMax"></span></label>
+        <input type="text" id="f-rivals" placeholder="DataScientest, Le Wagon" />
+        <p class="hint">Séparez par des virgules. On compte, question par question, qui est cité et qui ne l'est pas.</p>
       </div>
       <div class="rec hide" id="engBox"></div>
       <div class="g2">
@@ -861,6 +878,14 @@ function startScan(){
 
 var ENG_LABEL={mistral:'Mistral',claude:'Claude',openai:'GPT',gemini:'Gemini'};
 
+function paintRivals(){
+  var box=document.getElementById('rivalBox');
+  var n=(S.me&&S.me.competitors)||0;
+  if(!n){ box.classList.add('hide'); return; }
+  document.getElementById('rivalMax').textContent='(jusqu\u2019\u00e0 '+n+')';
+  box.classList.remove('hide');
+}
+
 function paintEngines(){
   var box=document.getElementById('engBox');
   var list=(S.me&&S.me.engines)||[];
@@ -889,7 +914,7 @@ async function switchPlan(){
 
 function paintQuota(){
   var b=document.getElementById('quotaBox'), btn=document.getElementById('scanBtn'), ad=document.getElementById('admBox');
-  paintEngines();
+  paintEngines(); paintRivals();
   if(!S.me){ b.classList.add('hide'); ad.classList.add('hide'); btn.disabled=false; return; }
   ad.classList.toggle('hide', !S.me.isAdmin);
   if(S.me.isAdmin){
@@ -970,6 +995,13 @@ async function runScan(){
 
     /* Chaque question part vers TOUS les moteurs en parallele, et plusieurs
        questions avancent de front : c'est ce qui rend tenable un scan de 60. */
+    /* Concurrents designes : on les compte sur le texte integral, question
+       par question, exactement comme la marque analysee. */
+    var RIVAUX=(document.getElementById('f-rivals').value||'').split(',')
+      .map(function(x){return x.trim();}).filter(function(x){return x.length>1;})
+      .slice(0,(S.me&&S.me.competitors)||0);
+    var rivalHits={}; RIVAUX.forEach(function(r){ rivalHits[r]=0; });
+
     var per={}; ENG.forEach(function(x){ per[x]={hits:0,tw:0,gw:0,ok:0}; });
     var rows=new Array(QS.length), done=0, failed=0, firstErr=null;
     var brandLc=d.brand.toLowerCase();
@@ -1000,6 +1032,10 @@ async function runScan(){
           if(men) nb++;
           seen.push({engine:r.eng,mentioned:men,excerpt:(r.text||'').slice(0,500)});
         });
+        if(!Q.named && any){
+          var tout=res.map(function(r){return r.text||'';}).join(' ').toLowerCase();
+          RIVAUX.forEach(function(r){ if(tout.indexOf(r.toLowerCase())>=0) rivalHits[r]++; });
+        }
         rows[i]={q:Q.q,named:Q.named,weight:Q.weight,engines:seen,mentioned:nb>0,nb:nb,any:any};
         document.getElementById('d'+i).className='dot '+(any?(Q.named?'':(nb?'h':'m')):'m');
         document.getElementById('v'+i).textContent = !any ? 'echec'
@@ -1041,7 +1077,12 @@ async function runScan(){
     document.getElementById('progBar').style.width='100%';
     document.getElementById('progTitle').textContent='Scan termine';
 
-    var data={brand:d.brand,score:score,margin:margin,hits:hits,blindTotal:blind.length,
+    var rivals=RIVAUX.map(function(r){
+      return {name:r, hits:rivalHits[r], total:blind.length,
+              share: blind.length? Math.round(rivalHits[r]/blind.length*100) : 0};
+    });
+
+    var data={brand:d.brand,score:score,margin:margin,hits:hits,blindTotal:blind.length,rivals:rivals,
       engine:ENG.map(function(x){return LAB[x]||x;}).join(', '),
       perEngine:perEngine,isAdmin:!!st.isAdmin,plan:st.plan,label:st.label,locked:locked,
       warning:(st.isAdmin&&warn)?warn:(failed?('Certaines requetes n ont pas abouti ('+failed+').'):null),
@@ -1057,7 +1098,7 @@ async function runScan(){
         brand:d.brand,activity:d.activity,city:d.city,price:d.price,sector:d.type,
         engines:ENG,questionCount:QS.length,
         score:score,margin:margin,hits:hits,blindTotal:blind.length,
-        perEngine:perEngine,competitors:(an&&an.competitors)||[],
+        perEngine:perEngine,rivals:rivals,competitors:(an&&an.competitors)||[],
         verdict:(an&&an.verdict)||null,answers:data.results,
         problems:(an&&(an.findings||an.problems))||[],actions:(an&&an.actions)||[],errors:(an&&an.errors)||[]
       }});
@@ -1093,6 +1134,22 @@ function showResults(x){
       '<div class="kp"><span class="k">Questions sans votre nom</span><span class="v">'+x.hits+' / '+x.blindTotal+'</span></div>'+
       '<div class="kp"><span class="k">Noms cités à votre place</span><span class="v">'+((a.competitors||[]).length||'—')+'</span></div>'+
       '<div class="kp"><span class="k">Inexactitudes relevées</span><span class="v">'+((a.errors||[]).length||0)+'</span></div></div>';
+  var rv=x.rivals||[];
+  if(rv.length){
+    var lignes=[{name:x.brand,hits:x.hits,total:x.blindTotal,moi:true}]
+      .concat(rv.map(function(r){return {name:r.name,hits:r.hits,total:r.total};}))
+      .sort(function(a,b){return b.hits-a.hits;});
+    h+='<div class="panel"><h3>Face \u00e0 vos concurrents</h3>'
+      +'<p class="ph">Sur les '+x.blindTotal+' questions o\u00f9 aucun nom n\u2019\u00e9tait souffl\u00e9 \u00e0 l\u2019IA.</p>';
+    lignes.forEach(function(l){
+      var pct = l.total? Math.round(l.hits/l.total*100) : 0;
+      h+='<div class="rival-row'+(l.moi?' moi':'')+'">'
+        +'<div class="rival-nom">'+esc(l.name)+(l.moi?' <span class="rival-tag">vous</span>':'')+'</div>'
+        +'<div class="rival-bar"><i style="width:'+pct+'%"></i></div>'
+        +'<div class="rival-val">'+l.hits+'/'+l.total+'</div></div>';
+    });
+    h+='</div>';
+  }
   var pe=x.perEngine||{}, peKeys=Object.keys(pe);
   if(peKeys.length){
     h+='<div style="font-size:15px;color:var(--dm);margin-bottom:10px">Par moteur :</div><div class="pegrid">';
@@ -1287,6 +1344,7 @@ async function openScan(id){
     var r=await api({action:'detail',id:id}), sc=r.scan;
     var data={brand:sc.brand,score:sc.score,margin:sc.margin,hits:sc.hits,blindTotal:sc.blind_total,
       engine:(sc.engines||[]).join(', ')||'—',isAdmin:!!(S.me&&S.me.isAdmin),warning:null,
+      perEngine:sc.per_engine||{},rivals:sc.rivals||[],
       results:sc.answers||[],
       locked:!(S.me&&S.me.fixes),
       analysis:{competitors:sc.competitors||[],verdict:sc.verdict,findings:sc.problems||[],
