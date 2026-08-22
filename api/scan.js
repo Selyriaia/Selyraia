@@ -532,7 +532,8 @@ Règles :
       answers: Array.isArray(d.answers) ? d.answers.slice(0, 80) : [],
       problems: Array.isArray(d.problems) ? d.problems.slice(0, 20) : [],
       actions: Array.isArray(d.actions) ? d.actions.slice(0, 20) : [],
-      errors: Array.isArray(d.errors) ? d.errors.slice(0, 20) : []
+      errors: Array.isArray(d.errors) ? d.errors.slice(0, 20) : [],
+      rivals: Array.isArray(d.rivals) ? d.rivals.slice(0, 5) : []
     };
     if (row.brand.length < 2) return fail('Scan incomplet.', 400);
     const saved = await saveScan(row, svcKey);
@@ -545,7 +546,7 @@ Règles :
     if (!svcKey) return ok({ scans: [] });
     try {
       const q = `${SUPABASE_URL}/rest/v1/scans?user_id=eq.${user.id}`
-        + `&select=id,created_at,brand,activity,city,score,margin,hits,blind_total,engines,plan`
+        + `&select=id,created_at,brand,activity,city,score,margin,hits,blind_total,engines,plan,rivals`
         + `&order=created_at.desc&limit=50`;
       const r = await fetch(q, { headers: svc(svcKey) });
       return ok({ scans: r.ok ? await r.json() : [] });
