@@ -131,7 +131,7 @@ async function callClaude(p, k, m, mx, json) {
 async function callOpenAI(p, k, m, mx, json) {
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${k}` },
-    body: JSON.stringify(Object.assign({ model: m, messages: [{ role: 'user', content: p }], max_tokens: mx },
+    body: JSON.stringify(Object.assign({ model: m, messages: [{ role: 'user', content: p }], max_completion_tokens: mx },
       json ? { response_format: { type: 'json_object' } } : {}))
   });
   if (!r.ok) throw new Error(`OpenAI ${r.status} — ${(await r.text()).slice(0, 220)}`);
