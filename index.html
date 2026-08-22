@@ -201,6 +201,11 @@
   .snav button:hover{background:var(--sf);color:var(--tx)}
   .snav button[aria-selected=true]{background:var(--sf2);color:var(--tx);font-weight:500}
 
+  .pick{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--ln);
+    font-size:15px;color:#D5D8DE;cursor:pointer;line-height:1.5}
+  .pick:last-of-type{border-bottom:0}
+  .pick input{width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--ac)}
+
   .alertbox{padding:13px 15px;border-radius:11px;margin-bottom:16px;font-size:15px;
     background:rgba(255,107,107,.09);border:1px solid rgba(255,107,107,.3);color:#FFC9C9}
   .evlist{list-style:none;margin:6px 0 16px;display:flex;flex-direction:column;gap:7px}
@@ -422,6 +427,10 @@
           <option value="default">Autre activité</option>
         </select>
       </div>
+      <div class="fld hide" id="clientBox">
+        <label class="fl" for="f-client">Scanner pour une marque cliente</label>
+        <select id="f-client" onchange="fillFromClient()"></select>
+      </div>
       <div class="rec hide" id="engBox"></div>
       <div class="g2">
         <div class="fld"><label class="fl" for="f-brand">Nom de votre marque, chaîne ou établissement</label>
@@ -572,6 +581,8 @@
     <div class="uc"><div class="nm2" id="uN">—</div><div class="pl" id="uP">—</div></div>
     <nav class="snav">
       <button aria-selected="true" onclick="tab('ov',this)">Vue d'ensemble</button>
+      <button aria-selected="false" class="hide" id="tabAg" onclick="tab('ag',this)">Marques clientes</button>
+      <button aria-selected="false" class="hide" id="tabPr" onclick="tab('pr',this)">Prestations</button>
       <button aria-selected="false" onclick="tab('se',this)">Compte</button>
     </nav>
     <button class="btn b3 sm" style="margin-top:12px;width:100%" onclick="logout()">Déconnexion</button>
@@ -585,6 +596,43 @@
       </div>
       <div id="lastScan"></div>
     </div>
+    <div id="t-ag" class="hide">
+      <div class="panel">
+        <h3>Marques clientes</h3>
+        <p class="ph">Suivez autant de marques que vous voulez. Chaque scan peut être rattaché à l'une d'elles.</p>
+        <div class="g2">
+          <div class="fld"><label class="fl" for="c-name">Nom de la marque</label>
+            <input type="text" id="c-name" placeholder="Institut Lumen" /></div>
+          <div class="fld"><label class="fl" for="c-act">Activité</label>
+            <input type="text" id="c-act" placeholder="formation data" /></div>
+        </div>
+        <div class="g2">
+          <div class="fld"><label class="fl" for="c-city">Ville <span style="color:var(--dm2)">(facultatif)</span></label>
+            <input type="text" id="c-city" placeholder="Paris" /></div>
+          <div class="fld"><label class="fl" for="c-price">Tarif de l'offre phare <span style="color:var(--dm2)">(facultatif)</span></label>
+            <input type="text" id="c-price" placeholder="3 900 €" /></div>
+        </div>
+        <div class="fld"><label class="fl" for="c-sector">Type d'activité</label>
+          <select id="c-sector">
+            <option value="default">Entreprise, commerce ou service</option>
+            <option value="school">École, université, organisme de formation</option>
+            <option value="creator">Créateur de contenu</option>
+            <option value="media">Média, télévision, radio, presse</option>
+          </select></div>
+        <button class="btn b1" onclick="addClient()">Ajouter cette marque</button>
+        <p class="err hide" id="cErr"></p>
+      </div>
+      <div id="clientList"></div>
+    </div>
+
+    <div id="t-pr" class="hide">
+      <div class="panel">
+        <h3>Prestations de correction</h3>
+        <p class="ph">Les problèmes que vous nous confiez. Nous les analysons, nous chiffrons, vous validez.</p>
+      </div>
+      <div id="intervList"></div>
+    </div>
+
     <div id="t-se" class="hide">
       <div class="panel"><h3>Votre compte</h3>
         <p class="ph">Formule active : <b id="setPlan">—</b></p>
@@ -660,7 +708,10 @@ async function hydrate(navigate){
   if(!S.user) return;
   var m=await loadMe();
   if(m) S.me=m;              // si l'appel échoue on garde l'ancien état : pas de déconnexion
-  paintNav(); paintDash(); loadHistory();
+  paintNav(); paintDash(); loadHistory(); loadAgency();
+  var ag=!!(S.me&&(S.me.agency||S.me.isAdmin));
+  document.getElementById('tabAg').classList.toggle('hide', !(S.me&&S.me.agency));
+  document.getElementById('tabPr').classList.toggle('hide', !ag);
   if(window.location.hash.indexOf('access_token')>=0) history.replaceState(null,'',window.location.pathname);
   if(navigate){
     var w=localStorage.getItem('selyraia_goto'); localStorage.removeItem('selyraia_goto');
@@ -1137,6 +1188,13 @@ function showResults(x){
       '<button class="btn b1 lg" onclick="go(\'plans\')">Voir les formules</button></div>';
   }
 
+  if(S.me && S.me.agency && x.id){
+    h+='<div class="locked" style="border-style:solid"><span class="lk">Offre Agence</span>'
+      +'<h3>Nous corrigeons ces problèmes pour vous</h3>'
+      +'<p>Confiez-nous les corrections. Nous analysons le travail nécessaire, nous vous envoyons un devis, '
+      +'et rien ne démarre avant votre validation.</p>'
+      +'<button class="btn b1 lg" onclick="askIntervention()">Demander une prestation</button></div>';
+  }
   if(S.me && S.me.pdf){
     h+='<div style="margin-top:22px"><button class="btn b2" id="pdfBtn" onclick="exportPdf()">'
       +'Exporter ce rapport en PDF</button>'
@@ -1236,6 +1294,153 @@ function exportPdf(){
   setTimeout(function(){ document.title=t; }, 800);
 }
 
+/* ═══ Offre Agence ═══════════════════════════════════════════════════ */
+
+var STATUTS={requested:'Demande envoyée',quoted:'Devis proposé',accepted:'Accepté',
+             refused:'Refusé',in_progress:'En cours de correction',done:'Terminé'};
+
+async function loadAgency(){
+  if(!(S.me&&S.me.agency)&&!(S.me&&S.me.isAdmin)) return;
+  try{ var r=await api({action:'clients'}); S.clients=r.clients||[]; }catch(e){ S.clients=[]; }
+  try{ var i=await api({action:'interventions'}); S.intervs=i.interventions||[]; S.asAdmin=!!i.asAdmin; }
+  catch(e){ S.intervs=[]; }
+  paintClients(); paintIntervs(); paintClientPicker();
+}
+
+function paintClientPicker(){
+  var box=document.getElementById('clientBox'), sel=document.getElementById('f-client');
+  if(!box) return;
+  var l=S.clients||[];
+  if(!(S.me&&S.me.agency)||!l.length){ box.classList.add('hide'); return; }
+  sel.innerHTML='<option value="">— saisie libre —</option>'
+    +l.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join('');
+  box.classList.remove('hide');
+}
+
+function fillFromClient(){
+  var id=document.getElementById('f-client').value;
+  var c=(S.clients||[]).filter(function(x){return x.id===id;})[0];
+  if(!c) return;
+  document.getElementById('f-brand').value=c.name||'';
+  document.getElementById('f-act').value=c.activity||'';
+  document.getElementById('f-city').value=c.city||'';
+  document.getElementById('f-price').value=c.price||'';
+  document.getElementById('f-type').value=c.sector||'default';
+  syncType();
+}
+
+async function addClient(){
+  var e=document.getElementById('cErr'); e.classList.add('hide');
+  try{
+    await api({action:'client_add',
+      name:document.getElementById('c-name').value,
+      activity:document.getElementById('c-act').value,
+      city:document.getElementById('c-city').value,
+      price:document.getElementById('c-price').value,
+      sector:document.getElementById('c-sector').value});
+    ['c-name','c-act','c-city','c-price'].forEach(function(k){document.getElementById(k).value='';});
+    loadAgency();
+  }catch(err){ e.textContent=err.message; e.classList.remove('hide'); }
+}
+
+async function delClient(id){
+  if(!confirm('Retirer cette marque de votre portefeuille ?')) return;
+  try{ await api({action:'client_del',id:id}); loadAgency(); }catch(e){ alert(e.message); }
+}
+
+function paintClients(){
+  var el=document.getElementById('clientList'); if(!el) return;
+  var l=S.clients||[];
+  if(!l.length){ el.innerHTML='<div class="panel"><p class="ph">Aucune marque pour l\x27instant.</p></div>'; return; }
+  el.innerHTML='<div class="panel"><h3>'+l.length+' marque'+(l.length>1?'s':'')+' suivie'+(l.length>1?'s':'')+'</h3>'
+    +l.map(function(c){
+      return '<div class="hrow" style="cursor:default"><div class="hmain"><h4>'+esc(c.name)+'</h4>'
+        +'<p>'+esc(c.activity||'')+(c.city?' · '+esc(c.city):'')+(c.price?' · '+esc(c.price):'')+'</p></div>'
+        +'<div><button class="btn b3 sm" onclick="delClient(\x27'+c.id+'\x27)">Retirer</button></div></div>';
+    }).join('')+'</div>';
+}
+
+/* Transformer les problèmes détectés en demande de prestation */
+function askIntervention(){
+  var L=S.last; if(!L||!L.id){ alert("Lancez d\x27abord un scan."); return; }
+  var f=(L.analysis&&(L.analysis.findings||L.analysis.problems))||[];
+  var corrigibles=f.filter(function(x){return String(x.severity||'')!=='optimise';});
+  if(!corrigibles.length){ alert("Aucun problème à corriger sur ce scan."); return; }
+  var box=document.getElementById('scanRes');
+  var h='<div class="panel" id="askPanel"><h3>Confier la correction à Selyraia</h3>'
+    +'<p class="ph">Sélectionnez ce que vous voulez nous confier. Nous analysons, nous chiffrons, vous validez avant tout travail.</p>';
+  corrigibles.forEach(function(x,i){
+    h+='<label class="pick"><input type="checkbox" class="pickbox" data-i="'+i+'" checked> '
+      +'<span>'+esc(x.title)+'</span></label>';
+  });
+  h+='<div class="fld" style="margin-top:14px"><label class="fl" for="i-msg">Précisions (facultatif)</label>'
+    +'<input type="text" id="i-msg" placeholder="Contraintes, délais, contexte…"></div>'
+    +'<button class="btn b1" onclick="sendIntervention()">Envoyer la demande</button> '
+    +'<button class="btn b3" onclick="document.getElementById(\x27askPanel\x27).remove()">Annuler</button>'
+    +'<p class="err hide" id="iErr"></p><p class="ok hide" id="iOk"></p></div>';
+  var vieux=document.getElementById('askPanel'); if(vieux) vieux.remove();
+  box.insertAdjacentHTML('afterbegin',h);
+  document.getElementById('askPanel').scrollIntoView({behavior:'smooth'});
+  S._pick=corrigibles;
+}
+
+async function sendIntervention(){
+  var e=document.getElementById('iErr'), o=document.getElementById('iOk');
+  e.classList.add('hide'); o.classList.add('hide');
+  var choisis=[].slice.call(document.querySelectorAll('.pickbox'))
+    .filter(function(c){return c.checked;})
+    .map(function(c){ var x=S._pick[+c.dataset.i]; return {code:x.code||null,title:x.title,severity:x.severity}; });
+  if(!choisis.length){ e.textContent="Sélectionnez au moins un problème."; e.classList.remove('hide'); return; }
+  try{
+    await api({action:'intervention_request',scanId:S.last.id,
+      clientId:(document.getElementById('f-client')||{}).value||null,
+      problems:choisis, message:document.getElementById('i-msg').value});
+    o.textContent="Demande envoyée. Nous revenons vers vous avec un devis.";
+    o.classList.remove('hide');
+    loadAgency();
+  }catch(err){ e.textContent=err.message; e.classList.remove('hide'); }
+}
+
+async function quoteInterv(id){
+  var m=prompt("Montant du devis en euros (HT) :");
+  if(m===null) return;
+  var n=prompt("Note pour le client (facultatif) :")||'';
+  try{ await api({action:'intervention_quote',id:id,amount:parseFloat(String(m).replace(',','.')),note:n});
+       loadAgency(); }
+  catch(e){ alert(e.message); }
+}
+
+async function setIntervStatus(id,st){
+  try{ await api({action:'intervention_status',id:id,status:st}); loadAgency(); }
+  catch(e){ alert(e.message); }
+}
+
+function paintIntervs(){
+  var el=document.getElementById('intervList'); if(!el) return;
+  var l=S.intervs||[];
+  if(!l.length){ el.innerHTML='<div class="panel"><p class="ph">Aucune demande de prestation.</p></div>'; return; }
+  el.innerHTML='<div class="panel">'+l.map(function(v){
+    var pb=(v.problems||[]).map(function(p){return esc(p.title);}).join(' · ');
+    var h='<div class="find" style="border-left-color:#A99BFF">'
+      +'<div class="findhead"><span class="findsev">'+esc(STATUTS[v.status]||v.status)+'</span>'
+      +'<h4>'+(v.quote_amount!=null?(v.quote_amount+' € HT'):'Devis en attente')+'</h4></div>'
+      +'<p class="findline">'+pb+'</p>';
+    if(v.message)    h+='<p class="findline"><b>Précisions</b> '+esc(v.message)+'</p>';
+    if(v.quote_note) h+='<p class="findline"><b>Note</b> '+esc(v.quote_note)+'</p>';
+    h+='<p class="findline" style="font-size:13.5px;color:var(--dm2)">Demandé le '
+      +new Date(v.created_at).toLocaleDateString('fr-FR')+'</p>';
+    if(S.asAdmin){
+      h+='<button class="btn b2 sm" onclick="quoteInterv(\x27'+v.id+'\x27)">Chiffrer</button> '
+        +'<button class="btn b3 sm" onclick="setIntervStatus(\x27'+v.id+'\x27,\x27in_progress\x27)">En cours</button> '
+        +'<button class="btn b3 sm" onclick="setIntervStatus(\x27'+v.id+'\x27,\x27done\x27)">Terminé</button>';
+    } else if(v.status==='quoted'){
+      h+='<button class="btn b1 sm" onclick="setIntervStatus(\x27'+v.id+'\x27,\x27accepted\x27)">Accepter le devis</button> '
+        +'<button class="btn b3 sm" onclick="setIntervStatus(\x27'+v.id+'\x27,\x27refused\x27)">Refuser</button>';
+    }
+    return h+'</div>';
+  }).join('')+'</div>';
+}
+
 function paintDash(){
   if(!S.user) return;
   document.getElementById('uN').textContent=S.user.email;
@@ -1251,7 +1456,7 @@ function paintDash(){
 }
 
 function tab(id,btn){
-  ['ov','se'].forEach(function(x){document.getElementById('t-'+x).classList.toggle('hide',x!==id);});
+  ['ov','ag','pr','se'].forEach(function(x){document.getElementById('t-'+x).classList.toggle('hide',x!==id);});
   document.querySelectorAll('.snav button').forEach(function(b){b.setAttribute('aria-selected',String(b===btn));});
 }
 
