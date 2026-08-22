@@ -331,11 +331,16 @@
         <label class="fl" for="f-type">Votre type d'activité</label>
         <select id="f-type" onchange="syncType()">
           <option value="default">Entreprise, commerce ou service</option>
-          <option value="default">École privée, université, organisme de formation</option>
+          <option value="school">École privée, université, organisme de formation</option>
           <option value="creator">Créateur de contenu (Twitch, YouTube, TikTok, Instagram)</option>
           <option value="media">Média, télévision, radio, presse</option>
           <option value="default">Autre activité</option>
         </select>
+      </div>
+      <div class="fld hide" id="engBox">
+        <label class="fl" for="f-eng">Moteur à interroger</label>
+        <select id="f-eng"></select>
+        <p class="hint">Votre formule donne accès à plusieurs IA. Chacune répond différemment.</p>
       </div>
       <div class="g2">
         <div class="fld"><label class="fl" for="f-brand">Nom de votre marque, chaîne ou établissement</label>
@@ -420,7 +425,7 @@
         <ul>
           <li><span class="m">✓</span> Tout ce qu'il y a dans Plus</li>
           <li><span class="m">✓</span> Un scan tous les 2 jours</li>
-          <li><span class="m">✓</span> 60 questions, 5 moteurs</li>
+          <li><span class="m">✓</span> 60 questions, 4 moteurs</li>
           <li><span class="m">✓</span> Comparaison avec 5 concurrents</li>
           <li><span class="m">✓</span> Alerte si vous chutez</li>
           <li><span class="m">✓</span> 10 actions + rapport PDF</li>
@@ -683,11 +688,11 @@ async function api(payload, needAuth){
     if(!t) throw new Error("Session expirée. Reconnectez-vous.");
     h['Authorization']='Bearer '+t;
   }
-  var r=await fetch('/.netlify/functions/scan',{method:'POST',headers:h,body:JSON.stringify(payload)});
+  var r=await fetch('/api/scan',{method:'POST',headers:h,body:JSON.stringify(payload)});
   var raw=await r.text();
   var j;
   try{ j=JSON.parse(raw); }
-  catch(e){ throw new Error("Réponse serveur illisible (code "+r.status+").\nLa fonction n'est probablement pas déployée : vérifiez netlify/functions/package.json"); }
+  catch(e){ throw new Error("Réponse serveur illisible (code "+r.status+").\nLa fonction serveur n'est probablement pas déployée : vérifiez que api/scan.js et package.json sont bien à la racine du projet."); }
   if(!r.ok) throw new Error(j.error||('Erreur '+r.status));
   return j;
 }
@@ -707,8 +712,20 @@ function startScan(){
   go('scan'); paintQuota();
 }
 
+var ENG_LABEL={mistral:'Mistral (Europe)',claude:'Claude',openai:'GPT',gemini:'Gemini'};
+function paintEngines(){
+  var box=document.getElementById('engBox'), sel=document.getElementById('f-eng');
+  var list=(S.me&&S.me.engines)||[];
+  if(!S.me||S.me.isAdmin||list.length<2){ box.classList.add('hide'); return; }
+  sel.innerHTML=list.map(function(e){
+    return '<option value="'+e+'">'+esc(ENG_LABEL[e]||e)+'</option>';
+  }).join('');
+  box.classList.remove('hide');
+}
+
 function paintQuota(){
   var b=document.getElementById('quotaBox'), btn=document.getElementById('scanBtn'), ad=document.getElementById('admBox');
+  paintEngines();
   if(!S.me){ b.classList.add('hide'); ad.classList.add('hide'); btn.disabled=false; return; }
   ad.classList.toggle('hide', !S.me.isAdmin);
   if(S.me.isAdmin){
@@ -755,7 +772,9 @@ function syncType(){
 
 async function runScan(){
   var e=document.getElementById('scanErr'); e.classList.add('hide');
-  var engine=(S.me&&S.me.isAdmin)?document.getElementById('a-eng').value:'mistral';
+  var engine='mistral';
+  if(S.me&&S.me.isAdmin) engine=document.getElementById('a-eng').value;
+  else if(!document.getElementById('engBox').classList.contains('hide')) engine=document.getElementById('f-eng').value;
 
   var d={
     brand:document.getElementById('f-brand').value.trim(),
