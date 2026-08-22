@@ -201,7 +201,7 @@ async function ask(name, prompt, mx, json) {
 /* ─── Questions par secteur ─────────────────────────────────────────────── */
 
 // Extrait un objet JSON d'une reponse de modele, en reparant les defauts courants.
-function looseParse(raw) {
+function (raw) {
   if (!raw) return null;
   let t = String(raw).replace(/```json|```/g, '').trim();
   const a = t.indexOf('{'), b = t.lastIndexOf('}');
@@ -478,7 +478,7 @@ Règles :
     let analysis = null, warn = null;
     for (let i = 0; i < 2 && !analysis; i++) {
       try {
-        analysis = looseParse(await ask(engine, i ? p + RETRY : p, 2200, true));
+        analysis = looseParse(await ask(engine, i ? p + RETRY : p, 2000 + nbActions * 200, true));
         if (!analysis) warn = "Le moteur n'a pas renvoye de JSON exploitable.";
       } catch (e) { warn = String(e.message || e).slice(0, 300); break; }
     }
