@@ -201,6 +201,20 @@
   .snav button:hover{background:var(--sf);color:var(--tx)}
   .snav button[aria-selected=true]{background:var(--sf2);color:var(--tx);font-weight:500}
 
+  .hrow{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;
+    padding:14px 0;border-bottom:1px solid var(--ln);cursor:pointer}
+  .hrow:last-child{border-bottom:0}
+  .hrow:hover .hmain h4{color:#A99BFF}
+  .hmain h4{font-size:16.5px;font-weight:600;letter-spacing:-.015em;margin-bottom:3px}
+  .hmain p{font-size:13.5px;color:var(--dm2)}
+  .hscore{font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .hev{font-size:14px;min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
+  @media(max-width:520px){
+    .hrow{grid-template-columns:1fr auto;gap:8px}
+    .hev{grid-column:2;text-align:right}
+    .hscore{font-size:19px}
+  }
+
   footer{border-top:1px solid var(--ln);padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--dm2)}
 
   @media(max-width:960px){
@@ -534,7 +548,7 @@ try{
   }
 }catch(e){ console.error('Supabase indisponible',e); }
 
-var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null};
+var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null,history:[]};
 var VIEWS=['home','scan','plans','auth','app'];
 var stack=['home'];
 
@@ -578,7 +592,7 @@ async function hydrate(navigate){
   if(!S.user) return;
   var m=await loadMe();
   if(m) S.me=m;              // si l'appel échoue on garde l'ancien état : pas de déconnexion
-  paintNav(); paintDash();
+  paintNav(); paintDash(); loadHistory();
   if(window.location.hash.indexOf('access_token')>=0) history.replaceState(null,'',window.location.pathname);
   if(navigate){
     var w=localStorage.getItem('selyraia_goto'); localStorage.removeItem('selyraia_goto');
@@ -857,8 +871,22 @@ async function runScan(){
       results:results.map(function(r){return {q:r.q,named:r.named,mentioned:r.mentioned,excerpt:(r.text||'').slice(0,600)};}),
       analysis:an};
 
+    /* on conserve le scan : sans ca tout disparait au rechargement */
+    try{
+      var sv=await api({action:'save',data:{
+        brand:d.brand,activity:d.activity,city:d.city,price:d.price,sector:d.type,
+        engines:[engine],questionCount:QS.length,
+        score:score,margin:margin,hits:hits,blindTotal:blind.length,
+        perEngine:{},competitors:(an&&an.competitors)||[],
+        verdict:(an&&an.verdict)||null,answers:data.results,
+        problems:(an&&an.problems)||[],actions:(an&&an.actions)||[],errors:(an&&an.errors)||[]
+      }});
+      data.id=sv.id;
+    }catch(err){ if(!data.warning) data.warning="Scan affiche mais non enregistre : "+err.message; }
+
     S.last=data;
     var m=await loadMe(); if(m) S.me=m;
+    loadHistory();
     paintNav(); paintQuota(); paintDash();
     showResults(data);
   }catch(err){
@@ -935,6 +963,49 @@ function showResults(x){
   var box=document.getElementById('scanRes');
   box.innerHTML=h; box.classList.remove('hide');
   box.scrollIntoView({behavior:'smooth'});
+}
+
+async function loadHistory(){
+  try{ var r=await api({action:'history'}); S.history=r.scans||[]; }
+  catch(e){ S.history=[]; }
+  paintHistory();
+}
+
+function paintHistory(){
+  var el=document.getElementById('lastScan'); if(!el) return;
+  var h=S.history||[];
+  if(!h.length){ el.innerHTML=''; return; }
+  var rows=h.map(function(sc,i){
+    var prev=h[i+1], ev='';
+    if(prev && sc.score!=null && prev.score!=null){
+      var dlt=sc.score-prev.score;
+      ev = dlt>0 ? '<span style="color:var(--ok)">▲ +'+dlt+'</span>'
+         : dlt<0 ? '<span style="color:var(--bad)">▼ '+dlt+'</span>'
+         : '<span style="color:var(--dm2)">=</span>';
+    }
+    var dt=new Date(sc.created_at);
+    return '<div class="hrow" onclick="openScan(\''+sc.id+'\')">'
+      +'<div class="hmain"><h4>'+esc(sc.brand)+'</h4><p>'
+      +dt.toLocaleDateString('fr-FR')+' · '+dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+      +' · '+esc((sc.engines||[]).join(', ')||'—')+'</p></div>'
+      +'<div class="hscore">'+(sc.score==null?'—':sc.score)+'</div>'
+      +'<div class="hev">'+ev+'</div></div>';
+  }).join('');
+  el.innerHTML='<div class="panel"><h3>Historique</h3><p class="ph">'
+    +h.length+' scan'+(h.length>1?'s':'')+' conservé'+(h.length>1?'s':'')
+    +'. Cliquez sur une ligne pour revoir son diagnostic.</p>'+rows+'</div>';
+}
+
+async function openScan(id){
+  try{
+    var r=await api({action:'detail',id:id}), sc=r.scan;
+    var data={brand:sc.brand,score:sc.score,margin:sc.margin,hits:sc.hits,blindTotal:sc.blind_total,
+      engine:(sc.engines||[]).join(', ')||'—',isAdmin:!!(S.me&&S.me.isAdmin),warning:null,
+      results:sc.answers||[],
+      analysis:{competitors:sc.competitors||[],verdict:sc.verdict,problems:sc.problems||[],
+                actions:sc.actions||[],errors:sc.errors||[]}};
+    S.last=data; go('scan'); paintQuota(); showResults(data);
+  }catch(e){ alert(e.message||"Scan introuvable."); }
 }
 
 function paintDash(){
