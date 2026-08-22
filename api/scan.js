@@ -104,39 +104,44 @@ async function rollPeriod(profile, key) {
 
 /* ─── Fournisseurs ──────────────────────────────────────────────────────── */
 
-async function callMistral(p, k, m, mx) {
+async function callMistral(p, k, m, mx, json) {
   const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${k}` },
-    body: JSON.stringify({ model: m, messages: [{ role: 'user', content: p }], max_tokens: mx })
+    body: JSON.stringify(Object.assign({ model: m, messages: [{ role: 'user', content: p }], max_tokens: mx },
+      json ? { response_format: { type: 'json_object' } } : {}))
   });
   if (!r.ok) throw new Error(`Mistral ${r.status} — ${(await r.text()).slice(0, 220)}`);
   return (await r.json()).choices?.[0]?.message?.content?.trim() || '';
 }
 
-async function callClaude(p, k, m, mx) {
+async function callClaude(p, k, m, mx, json) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: m, max_tokens: mx, messages: [{ role: 'user', content: p }] })
+    body: JSON.stringify({ model: m, max_tokens: mx, messages: json
+      ? [{ role: 'user', content: p }, { role: 'assistant', content: '{' }]
+      : [{ role: 'user', content: p }] })
   });
   if (!r.ok) throw new Error(`Anthropic ${r.status} — ${(await r.text()).slice(0, 220)}`);
   const d = await r.json();
-  return (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  const out = (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  return json ? '{' + out : out;
 }
 
-async function callOpenAI(p, k, m, mx) {
+async function callOpenAI(p, k, m, mx, json) {
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${k}` },
-    body: JSON.stringify({ model: m, messages: [{ role: 'user', content: p }], max_tokens: mx })
+    body: JSON.stringify(Object.assign({ model: m, messages: [{ role: 'user', content: p }], max_tokens: mx },
+      json ? { response_format: { type: 'json_object' } } : {}))
   });
   if (!r.ok) throw new Error(`OpenAI ${r.status} — ${(await r.text()).slice(0, 220)}`);
   return (await r.json()).choices?.[0]?.message?.content?.trim() || '';
 }
 
-async function callGemini(p, k, m, mx) {
+async function callGemini(p, k, m, mx, json) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], generationConfig: { maxOutputTokens: mx } })
+    body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], generationConfig: Object.assign({ maxOutputTokens: mx }, json ? { responseMimeType: 'application/json' } : {}) })
   });
   if (!r.ok) throw new Error(`Gemini ${r.status} — ${(await r.text()).slice(0, 220)}`);
   const d = await r.json();
@@ -145,16 +150,29 @@ async function callGemini(p, k, m, mx) {
 
 const AD = { mistral: callMistral, claude: callClaude, openai: callOpenAI, gemini: callGemini };
 
-async function ask(name, prompt, mx) {
+async function ask(name, prompt, mx, json) {
   const e = ENGINES[name];
   const k = process.env[e.env];
   if (!k) throw new Error(`Clé ${e.env} absente des variables d'environnement Vercel.`);
-  const t = await AD[name](prompt, k, e.model, mx || 900);
+  const t = await AD[name](prompt, k, e.model, mx || 900, json);
   if (!t) throw new Error('Réponse vide du modèle');
   return t;
 }
 
 /* ─── Questions par secteur ─────────────────────────────────────────────── */
+
+// Extrait un objet JSON d'une reponse de modele, en reparant les defauts courants.
+function looseParse(raw) {
+  if (!raw) return null;
+  let t = String(raw).replace(/```json|```/g, '').trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b <= a) return null;
+  t = t.slice(a, b + 1);
+  try { return JSON.parse(t); } catch {}
+  const fixed = t.replace(/[\u0000-\u001F]+/g, ' ').replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(fixed); } catch {}
+  return null;
+}
 
 function questions(d) {
   const { brand, activity, city, type } = d;
@@ -343,14 +361,16 @@ Réponds UNIQUEMENT en JSON valide, sans balise de code, sans texte avant ni apr
 
 Règles : "competitors" = noms réellement cités à la place de ${brand}, max 5, vide si aucun. "problems" = 2 à 4. "errors" = uniquement les inexactitudes réellement visibles, vide si aucune. "actions" = exactement 2, les plus prioritaires.`;
 
-    try {
-      let raw = (await ask(engine, p, 2200)).replace(/```json|```/g, '').trim();
-      const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
-      const analysis = (s >= 0 && e > s) ? JSON.parse(raw.slice(s, e + 1)) : null;
-      return ok({ analysis });
-    } catch (e) {
-      return ok({ analysis: null, warning: String(e.message || e).slice(0, 300) });
+    const RETRY = "\n\nTa reponse precedente n'etait pas du JSON valide. Renvoie UNIQUEMENT l'objet JSON, "
+      + "en echappant tout guillemet double place a l'interieur d'une valeur texte.";
+    let analysis = null, warn = null;
+    for (let i = 0; i < 2 && !analysis; i++) {
+      try {
+        analysis = looseParse(await ask(engine, i ? p + RETRY : p, 2200, true));
+        if (!analysis) warn = "Le moteur n'a pas renvoye de JSON exploitable.";
+      } catch (e) { warn = String(e.message || e).slice(0, 300); break; }
     }
+    return ok({ analysis, warning: analysis ? null : warn });
   }
 
   return fail("Action inconnue.", 400);
