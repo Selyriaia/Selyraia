@@ -302,6 +302,15 @@
     a[href]:after{content:''}
   }
 
+  /* Les enfants de grille refusent par défaut de descendre sous la largeur de
+     leur contenu (min-width:auto). Un email ou un nom de marque un peu long
+     faisait alors déborder toute la page sur téléphone. */
+  .shell > *, .panel, .hrow > *, .find, .rival-row > *, .pegrid > *{min-width:0}
+  .hmain h4, .hmain p, .findhead h4, .findline, .rival-nom,
+  .plan li, .evlist li, .pick span, .diag{overflow-wrap:anywhere}
+  .snav{max-width:100%}
+  .uplan{max-width:150px}
+
   footer{border-top:1px solid var(--ln);padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--dm2)}
 
   @media(max-width:960px){
