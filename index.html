@@ -201,6 +201,12 @@
   .snav button:hover{background:var(--sf);color:var(--tx)}
   .snav button[aria-selected=true]{background:var(--sf2);color:var(--tx);font-weight:500}
 
+  .pegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:6px 0 18px}
+  .pecard{padding:14px;background:var(--bg2);border:1px solid var(--ln);border-radius:12px;text-align:center}
+  .pename{font-size:13.5px;color:var(--dm2);margin-bottom:8px}
+  .pescore{display:inline-block;font-size:15px;font-weight:600}
+  .pesub{font-size:12.5px;color:var(--dm2);margin-top:8px}
+
   .hrow{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;
     padding:14px 0;border-bottom:1px solid var(--ln);cursor:pointer}
   .hrow:last-child{border-bottom:0}
@@ -328,14 +334,15 @@
 
     <div class="admbox hide" id="admBox">
       <h4>Panneau administrateur</h4>
-      <p>Scans illimités. Vous pouvez tester chaque moteur.</p>
-      <div class="fld" style="max-width:320px"><label class="fl" for="a-eng">Moteur à interroger</label>
-        <select id="a-eng">
-          <option value="mistral">Mistral (gratuit)</option>
-          <option value="claude">Claude</option>
-          <option value="openai">GPT</option>
-          <option value="gemini">Gemini</option>
+      <p>Endossez une formule pour parcourir le produit exactement comme un client.</p>
+      <div class="fld" style="max-width:340px"><label class="fl" for="a-plan">Simuler la formule</label>
+        <select id="a-plan" onchange="switchPlan()">
+          <option value="free">Découverte — 8 questions, 1 moteur</option>
+          <option value="plus">Plus — 20 questions, 3 moteurs</option>
+          <option value="pro">Pro — 60 questions, 4 moteurs</option>
+          <option value="agence" selected>Agence — 60 questions, 4 moteurs</option>
         </select></div>
+      <div class="diag" id="planOut"></div>
       <button class="btn b2 sm" onclick="runDiag()">Vérifier la configuration serveur</button>
       <div class="diag hide" id="diagOut"></div>
     </div>
@@ -351,11 +358,7 @@
           <option value="default">Autre activité</option>
         </select>
       </div>
-      <div class="fld hide" id="engBox">
-        <label class="fl" for="f-eng">Moteur à interroger</label>
-        <select id="f-eng"></select>
-        <p class="hint">Votre formule donne accès à plusieurs IA. Chacune répond différemment.</p>
-      </div>
+      <div class="rec hide" id="engBox"></div>
       <div class="g2">
         <div class="fld"><label class="fl" for="f-brand">Nom de votre marque, chaîne ou établissement</label>
           <input type="text" id="f-brand" placeholder="Institut Lumen" /></div>
@@ -711,8 +714,12 @@ async function api(payload, needAuth){
   return j;
 }
 
+function simPlan(){
+  var el=document.getElementById('a-plan');
+  return (S.me && S.me.isAdmin && el) ? el.value : null;
+}
 async function loadMe(){
-  try{ return await api({action:'me'}); }catch(e){ return null; }
+  try{ return await api({action:'me', simulate:simPlan()}); }catch(e){ return null; }
 }
 
 /* ═══ Scan ═══ */
@@ -726,15 +733,32 @@ function startScan(){
   go('scan'); paintQuota();
 }
 
-var ENG_LABEL={mistral:'Mistral (Europe)',claude:'Claude',openai:'GPT',gemini:'Gemini'};
+var ENG_LABEL={mistral:'Mistral',claude:'Claude',openai:'GPT',gemini:'Gemini'};
+
 function paintEngines(){
-  var box=document.getElementById('engBox'), sel=document.getElementById('f-eng');
+  var box=document.getElementById('engBox');
   var list=(S.me&&S.me.engines)||[];
-  if(!S.me||S.me.isAdmin||list.length<2){ box.classList.add('hide'); return; }
-  sel.innerHTML=list.map(function(e){
-    return '<option value="'+e+'">'+esc(ENG_LABEL[e]||e)+'</option>';
-  }).join('');
+  if(!list.length){ box.classList.add('hide'); return; }
+  box.innerHTML='Ce scan interroge <b>'+list.length+' IA</b> en parallèle ('
+    +list.map(function(e){return esc(ENG_LABEL[e]||e);}).join(', ')+') sur <b>'
+    +((S.me&&S.me.questions)||8)+' questions</b>.';
   box.classList.remove('hide');
+}
+
+// L'admin recharge ses capacités selon la formule endossée.
+async function switchPlan(){
+  var out=document.getElementById('planOut');
+  out.textContent='Application de la formule…';
+  var m=await loadMe(); if(m) S.me=m;
+  paintQuota();
+  out.textContent=S.me
+    ? 'Formule endossée : '+S.me.label+' · '+S.me.questions+' questions · '
+      +S.me.engines.length+' moteur(s) : '+S.me.engines.join(', ')
+      +' · '+S.me.competitors+' concurrent(s) · '+S.me.actions+' actions'
+      +(S.me.everyHours?(' · 1 scan / '+S.me.everyHours+' h'):' · 1 scan à vie')
+      +' · historique '+(S.me.history?'oui':'non')+' · alertes '+(S.me.alerts?'oui':'non')
+      +' · PDF '+(S.me.pdf?'oui':'non')
+    : 'Impossible de lire la formule.';
 }
 
 function paintQuota(){
@@ -786,98 +810,128 @@ function syncType(){
 
 async function runScan(){
   var e=document.getElementById('scanErr'); e.classList.add('hide');
-  var engine='mistral';
-  if(S.me&&S.me.isAdmin) engine=document.getElementById('a-eng').value;
-  else if(!document.getElementById('engBox').classList.contains('hide')) engine=document.getElementById('f-eng').value;
+  var sim=simPlan();
 
   var d={
     brand:document.getElementById('f-brand').value.trim(),
     activity:document.getElementById('f-act').value.trim(),
     city:document.getElementById('f-city').value.trim(),
     price:document.getElementById('f-price').value.trim(),
-    type:document.getElementById('f-type').value,
-    engine:engine
+    type:document.getElementById('f-type').value
   };
   if(d.brand.length<2||d.activity.length<2){
-    e.textContent="Indiquez au moins votre nom et votre activité."; e.classList.remove('hide'); return;
+    e.textContent="Indiquez au moins votre nom et votre activite."; e.classList.remove('hide'); return;
   }
 
   var btn=document.getElementById('scanBtn');
-  btn.disabled=true; btn.textContent='Scan en cours…';
+  btn.disabled=true; btn.textContent='Scan en cours...';
   document.getElementById('scanProg').classList.remove('hide');
   document.getElementById('scanRes').classList.add('hide');
   document.getElementById('progBar').style.width='0%';
 
   try{
-    /* 1. démarrage : quota + liste des questions */
-    var st=await api({action:'start',brand:d.brand,activity:d.activity,city:d.city,type:d.type,engine:engine});
-    var QS=st.questions||[];
+    var st=await api({action:'start',brand:d.brand,activity:d.activity,city:d.city,type:d.type,simulate:sim});
+    var QS=st.questions||[], ENG=st.engines||['mistral'], LAB=st.engineLabels||{};
+    if(!ENG.length) throw new Error("Aucun moteur disponible.");
 
     var L=document.getElementById('qlist'); L.innerHTML='';
     QS.forEach(function(q,i){
       var row=document.createElement('div'); row.className='qr'; row.id='qr'+i;
-      row.innerHTML='<span class="dot" id="d'+i+'"></span><span class="qt">« '+esc(q.q)+' »</span><span class="qv" id="v'+i+'">en attente</span>';
+      row.innerHTML='<span class="dot" id="d'+i+'"></span><span class="qt">&laquo; '+esc(q.q)+' &raquo;</span>'
+                   +'<span class="qv" id="v'+i+'">en attente</span>';
       L.appendChild(row);
     });
 
-    /* 2. une requête courte par question — sous la limite des 10 s de Netlify */
-    var results=[], failed=0, firstErr=null;
-    for(var i=0;i<QS.length;i++){
-      document.getElementById('d'+i).className='dot w';
-      document.getElementById('v'+i).textContent='interrogation…';
-      document.getElementById('progTitle').textContent='Question '+(i+1)+' sur '+QS.length+'…';
-      var text='';
-      try{
-        var rr=await api({action:'ask',q:QS[i].q,engine:engine});
-        text=rr.text||'';
-      }catch(err){ failed++; if(!firstErr) firstErr=err.message; }
-      var men=!!text && text.toLowerCase().indexOf(d.brand.toLowerCase())>=0;
-      results.push({q:QS[i].q,named:QS[i].named,weight:QS[i].weight,text:text,mentioned:men});
-      document.getElementById('d'+i).className='dot '+(text?(QS[i].named?'':(men?'h':'m')):'m');
-      document.getElementById('v'+i).textContent=text?(QS[i].named?'question de contrôle':(men?'vous êtes cité':'vous êtes absent')):'échec';
-      document.getElementById('progBar').style.width=Math.round((i+1)/(QS.length+1)*100)+'%';
+    /* Chaque question part vers TOUS les moteurs en parallele, et plusieurs
+       questions avancent de front : c'est ce qui rend tenable un scan de 60. */
+    var per={}; ENG.forEach(function(x){ per[x]={hits:0,tw:0,gw:0,ok:0}; });
+    var rows=new Array(QS.length), done=0, failed=0, firstErr=null;
+    var brandLc=d.brand.toLowerCase();
+    var CONC=Math.max(1,Math.min(5,Math.round(20/ENG.length)));
+    var next=0;
+
+    function tick(){
+      document.getElementById('progBar').style.width=Math.round(done/(QS.length+1)*100)+'%';
+      document.getElementById('progTitle').textContent='Question '+done+' sur '+QS.length+' - '+ENG.length+' IA';
     }
 
-    if(!results.some(function(r){return r.text;})){
-      throw new Error("Aucune réponse obtenue du moteur.\n"+(firstErr||''));
+    async function worker(){
+      while(next<QS.length){
+        var i=next++, Q=QS[i];
+        document.getElementById('d'+i).className='dot w';
+        document.getElementById('v'+i).textContent='interrogation...';
+        var res=await Promise.all(ENG.map(function(eng){
+          return api({action:'ask',q:Q.q,engine:eng,simulate:sim})
+            .then(function(r){ return {eng:eng,text:r.text||''}; })
+            .catch(function(err){ failed++; if(!firstErr) firstErr=err.message; return {eng:eng,text:''}; });
+        }));
+        var seen=[], nb=0, any=false;
+        res.forEach(function(r){
+          var men=!!r.text && r.text.toLowerCase().indexOf(brandLc)>=0;
+          if(r.text){ any=true; per[r.eng].ok++;
+            if(!Q.named){ per[r.eng].tw+=(Q.weight||1);
+              if(men){ per[r.eng].gw+=(Q.weight||1); per[r.eng].hits++; } } }
+          if(men) nb++;
+          seen.push({engine:r.eng,mentioned:men,excerpt:(r.text||'').slice(0,500)});
+        });
+        rows[i]={q:Q.q,named:Q.named,weight:Q.weight,engines:seen,mentioned:nb>0,nb:nb,any:any};
+        document.getElementById('d'+i).className='dot '+(any?(Q.named?'':(nb?'h':'m')):'m');
+        document.getElementById('v'+i).textContent = !any ? 'echec'
+          : Q.named ? 'question de controle'
+          : (nb? ('cite sur '+nb+'/'+ENG.length+' IA') : 'absent partout');
+        done++; tick();
+      }
     }
+    await Promise.all(new Array(CONC).fill(0).map(function(){return worker();}));
 
-    /* 3. calcul du score */
-    var blind=results.filter(function(r){return !r.named && r.text;});
-    var tw=blind.reduce(function(s,r){return s+(r.weight||1);},0)||1;
-    var gw=blind.filter(function(r){return r.mentioned;}).reduce(function(s,r){return s+(r.weight||1);},0);
-    var score=Math.round(gw/tw*100);
+    if(!rows.some(function(r){return r&&r.any;})) throw new Error("Aucune reponse obtenue.\n"+(firstErr||''));
+
+    /* Score par moteur : c'est ce qui montre ou la marque est bien ou mal referencee */
+    var perEngine={}, tw=0, gw=0;
+    ENG.forEach(function(x){
+      var p=per[x];
+      perEngine[x]={label:LAB[x]||x,score:p.tw?Math.round(p.gw/p.tw*100):0,hits:p.hits,answered:p.ok};
+      tw+=p.tw; gw+=p.gw;
+    });
+    var score=tw?Math.round(gw/tw*100):0;
+    var blind=rows.filter(function(r){return r&&!r.named&&r.any;});
     var hits=blind.filter(function(r){return r.mentioned;}).length;
-    var margin=Math.max(5,Math.round(38/Math.sqrt(blind.length||1)));
+    var margin=Math.max(4,Math.round(38/Math.sqrt(blind.length*ENG.length||1)));
 
-    /* 4. diagnostic */
-    document.getElementById('progTitle').textContent='Analyse des réponses…';
-    var corpus=results.filter(function(r){return r.text;})
-      .map(function(r){return 'Q: '+r.q+'\nR: '+r.text.slice(0,700);}).join('\n\n');
+    document.getElementById('progTitle').textContent='Analyse des reponses...';
+    var corpus=rows.filter(Boolean).map(function(r){
+      var parts=r.engines.filter(function(x){return x.excerpt;})
+        .map(function(x){return '['+(LAB[x.engine]||x.engine)+'] '+x.excerpt.slice(0,300);});
+      return parts.length? ('Q: '+r.q+'\n'+parts.join('\n')) : '';
+    }).filter(Boolean).join('\n\n').slice(0,9000);
+
     var an=null, warn=firstErr;
     try{
       var az=await api({action:'analyze',brand:d.brand,activity:d.activity,city:d.city,price:d.price,
-                        corpus:corpus,hits:hits,total:blind.length,engine:engine});
-      an=az.analysis;
-      if(az.warning&&!warn) warn=az.warning;
+                        corpus:corpus,hits:hits,total:blind.length,engine:ENG[0],simulate:sim});
+      an=az.analysis; if(az.warning&&!warn) warn=az.warning;
     }catch(err){ if(!warn) warn=err.message; }
 
     document.getElementById('progBar').style.width='100%';
-    document.getElementById('progTitle').textContent='Scan terminé';
+    document.getElementById('progTitle').textContent='Scan termine';
 
     var data={brand:d.brand,score:score,margin:margin,hits:hits,blindTotal:blind.length,
-      engine:st.engineLabel||'Mistral',isAdmin:!!st.isAdmin,
-      warning:(st.isAdmin&&warn)?warn:(failed?('Certaines questions n\'ont pas abouti ('+failed+').'):null),
-      results:results.map(function(r){return {q:r.q,named:r.named,mentioned:r.mentioned,excerpt:(r.text||'').slice(0,600)};}),
+      engine:ENG.map(function(x){return LAB[x]||x;}).join(', '),
+      perEngine:perEngine,isAdmin:!!st.isAdmin,plan:st.plan,label:st.label,
+      warning:(st.isAdmin&&warn)?warn:(failed?('Certaines requetes n ont pas abouti ('+failed+').'):null),
+      results:rows.filter(Boolean).map(function(r){
+        return {q:r.q,named:r.named,mentioned:r.mentioned,
+                excerpt:(r.engines.filter(function(x){return x.excerpt;})[0]||{}).excerpt||'',
+                engines:r.engines.map(function(x){return {engine:x.engine,mentioned:x.mentioned};})};
+      }),
       analysis:an};
 
-    /* on conserve le scan : sans ca tout disparait au rechargement */
     try{
-      var sv=await api({action:'save',data:{
+      var sv=await api({action:'save',simulate:sim,data:{
         brand:d.brand,activity:d.activity,city:d.city,price:d.price,sector:d.type,
-        engines:[engine],questionCount:QS.length,
+        engines:ENG,questionCount:QS.length,
         score:score,margin:margin,hits:hits,blindTotal:blind.length,
-        perEngine:{},competitors:(an&&an.competitors)||[],
+        perEngine:perEngine,competitors:(an&&an.competitors)||[],
         verdict:(an&&an.verdict)||null,answers:data.results,
         problems:(an&&an.problems)||[],actions:(an&&an.actions)||[],errors:(an&&an.errors)||[]
       }});
@@ -890,7 +944,7 @@ async function runScan(){
     paintNav(); paintQuota(); paintDash();
     showResults(data);
   }catch(err){
-    e.textContent=err.message||"Le scan n'a pas abouti.";
+    e.textContent=err.message||"Le scan n a pas abouti.";
     e.classList.remove('hide');
   }
   btn.disabled=false; btn.textContent='Lancer le scan';
@@ -912,6 +966,17 @@ function showResults(x){
       '<div class="kp"><span class="k">Questions sans votre nom</span><span class="v">'+x.hits+' / '+x.blindTotal+'</span></div>'+
       '<div class="kp"><span class="k">Noms cités à votre place</span><span class="v">'+((a.competitors||[]).length||'—')+'</span></div>'+
       '<div class="kp"><span class="k">Inexactitudes relevées</span><span class="v">'+((a.errors||[]).length||0)+'</span></div></div>';
+  var pe=x.perEngine||{}, peKeys=Object.keys(pe);
+  if(peKeys.length){
+    h+='<div style="font-size:15px;color:var(--dm);margin-bottom:10px">Par moteur :</div><div class="pegrid">';
+    peKeys.forEach(function(k){
+      var m=pe[k], lvl=m.score>=55?'c':(m.score>=25?'b':'a');
+      h+='<div class="pecard"><div class="pename">'+esc(m.label||k)+'</div>'
+        +'<div class="pescore vlab '+lvl+'">'+m.score+'/100</div>'
+        +'<div class="pesub">cite dans '+m.hits+' reponse'+(m.hits>1?'s':'')+'</div></div>';
+    });
+    h+='</div>';
+  }
   if((a.competitors||[]).length){
     h+='<div style="font-size:15px;color:var(--dm)">Cités à votre place :</div><div class="rival">'+
       a.competitors.map(function(c){return '<span class="rv">'+esc(c)+'</span>';}).join('')+'</div>';
