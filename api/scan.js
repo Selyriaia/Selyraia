@@ -480,20 +480,30 @@ Réponds UNIQUEMENT en JSON valide, sans balise de code, sans texte avant ni apr
 Règles :
 - "competitors" = noms réellement cités à la place de ${brand}, max ${nbConcurrents}, vide si aucun.
 - "code" est OBLIGATOIRE et doit valoir exactement l'un de : absence_citations (la marque n'apparaît pas dans les réponses), prix_errone (tarif faux, absent ou invérifiable), info_contradictoire (informations divergentes selon les sources), reconnaissance (certification, diplôme ou légitimité non vérifiable), differenciation (positionnement indistinct des concurrents), presence_web (sources et pages insuffisantes pour que les IA comprennent l'entité), avis_reputation (avis clients absents ou négatifs), donnees_structurees (site sans données structurées exploitables), couverture_geo (ancrage local absent), offre_illisible (offre ou services mal décrits). Choisis le code qui correspond le mieux ; n'invente jamais un autre code.
-- "findings" = 3 à 6, classés du plus grave au moins grave. "critique" = empêche vraiment d'être compris ou recommandé ; "important" = réduit nettement la visibilité ; "ameliorer" = optimisation ; "optimise" = point déjà correct. Inclus au moins un "optimise" si quelque chose fonctionne réellement.
+- "findings" ne doit JAMAIS être vide : 3 à 6 constats, classés du plus grave au moins grave. Même si la marque est totalement absente des réponses, c'est en soi un constat critique à décrire. "critique" = empêche vraiment d'être compris ou recommandé ; "important" = réduit nettement la visibilité ; "ameliorer" = optimisation ; "optimise" = point déjà correct. Inclus au moins un "optimise" si quelque chose fonctionne réellement.
 - "steps" = 2 à 5 étapes concrètes, dans l'ordre, que le dirigeant peut exécuter lui-même. Pas de conseil vague.
 - "errors" = uniquement les inexactitudes réellement visibles, vide si aucune.
 - "actions" = exactement ${nbActions}, de la plus urgente à la moins urgente.`;
 
-    const RETRY = "\n\nTa reponse precedente n'etait pas du JSON valide. Renvoie UNIQUEMENT l'objet JSON, "
+    const RETRY = "\n\nTa reponse precedente etait inexploitable (JSON invalide ou liste \"findings\" vide). "
+      + "Renvoie UNIQUEMENT l'objet JSON, avec au moins 3 constats dans \"findings\", "
       + "en echappant tout guillemet double place a l'interieur d'une valeur texte.";
-    let analysis = null, warn = null;
-    for (let i = 0; i < 2 && !analysis; i++) {
+    let analysis = null, warn = null, secours = null;
+    // Un JSON valide mais sans aucun constat est un echec : le diagnostic EST le
+    // produit. On relance jusqu'a trois fois avant de renoncer.
+    for (let i = 0; i < 3 && !analysis; i++) {
       try {
-        analysis = looseParse(await ask(engine, i ? p + RETRY : p, 2000 + nbActions * 200, true));
-        if (!analysis) warn = "Le moteur n'a pas renvoye de JSON exploitable.";
+        const cand = looseParse(await ask(engine, i ? p + RETRY : p, 2000 + nbActions * 200, true));
+        if (cand && Array.isArray(cand.findings) && cand.findings.length) {
+          analysis = cand;
+        } else {
+          if (cand) secours = cand;
+          warn = cand ? "Le moteur a renvoye un diagnostic vide."
+                      : "Le moteur n'a pas renvoye de JSON exploitable.";
+        }
       } catch (e) { warn = String(e.message || e).slice(0, 300); break; }
     }
+    if (!analysis && secours) analysis = secours;
     // Filtrage côté serveur : sans droit aux corrections, la solution, les
     // étapes et la vérification ne quittent même pas le serveur. Regarder la
     // réponse réseau ne permet donc pas de les récupérer.
