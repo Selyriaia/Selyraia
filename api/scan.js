@@ -118,14 +118,13 @@ async function callClaude(p, k, m, mx, json) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: m, max_tokens: mx, messages: json
-      ? [{ role: 'user', content: p }, { role: 'assistant', content: '{' }]
-      : [{ role: 'user', content: p }] })
+    body: JSON.stringify(Object.assign(
+      { model: m, max_tokens: mx, messages: [{ role: 'user', content: p }] },
+      json ? { system: "Tu reponds exclusivement par un objet JSON valide, sans aucun texte autour et sans balise de code." } : {}))
   });
   if (!r.ok) throw new Error(`Anthropic ${r.status} — ${(await r.text()).slice(0, 220)}`);
   const d = await r.json();
-  const out = (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-  return json ? '{' + out : out;
+  return (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
 }
 
 async function callOpenAI(p, k, m, mx, json) {
