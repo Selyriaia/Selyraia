@@ -339,9 +339,9 @@
     -webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0%,#000 40%,transparent 100%)}
 
   /* Apparition au défilement */
-  .rv{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
-  .rv.on{opacity:1;transform:none}
-  .rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
+  .reveal.on{opacity:1;transform:none}
+  .reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}
 
   /* ── Hero en deux colonnes ── */
   .hero2{display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center;
@@ -460,7 +460,7 @@
   }
   @media(prefers-reduced-motion:reduce){
     .aurora span,.b1::after,.livepill i{animation:none!important}
-    .rv{opacity:1;transform:none}
+    .reveal{opacity:1;transform:none}
   }
 
   footer{border-top:1px solid var(--ln);
@@ -506,17 +506,17 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
   <!-- ══ HERO ══ -->
   <section class="hero2">
     <div>
-      <span class="livepill rv"><i></i> Scan en direct — réponses réelles des IA</span>
-      <h1 class="rv d1">Savez-vous ce que<br>les IA <span class="g">racontent sur vous</span> ?</h1>
-      <p class="lead rv d2">Vos clients demandent à une IA quoi choisir et qui suivre.
+      <span class="livepill reveal"><i></i> Scan en direct — réponses réelles des IA</span>
+      <h1 class="reveal d1">Savez-vous ce que<br>les IA <span class="g">racontent sur vous</span> ?</h1>
+      <p class="lead reveal d2">Vos clients demandent à une IA quoi choisir et qui suivre.
         La réponse cite des noms — parfois pas le vôtre, souvent avec des informations fausses.
         On pose les vraies questions de votre marché, sur quatre IA à la fois, et on vous montre
         exactement quoi corriger.</p>
-      <div class="hc rv d3">
+      <div class="hc reveal d3">
         <button class="btn b1 lg" onclick="startScan()">Lancer un scan gratuit</button>
         <a class="btn b2 lg" href="#comment">Voir comment ça marche</a>
       </div>
-      <div class="asr rv d3">
+      <div class="asr reveal d3">
         <span><b>✓</b> Un scan offert</span>
         <span><b>✓</b> Sans carte bancaire</span>
         <span><b>✓</b> Résultat en 3 minutes</span>
@@ -524,7 +524,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
     </div>
 
     <!-- Console : le produit en train de tourner -->
-    <div class="console rv d2" id="cons">
+    <div class="console reveal d2" id="cons">
       <div class="cbar"><em></em><em></em><em></em><span id="cbarTxt">scan · institut-lumen · 4 moteurs</span></div>
       <div class="cbody">
         <div id="qlines"></div>
@@ -547,7 +547,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
   </section>
 
   <!-- ══ CHIFFRES ══ -->
-  <div class="statband rv">
+  <div class="statband reveal">
     <div class="stat"><b data-to="4">0</b><span>IA interrogées en parallèle</span></div>
     <div class="stat"><b data-to="60">0</b><span>questions par scan</span></div>
     <div class="stat"><b data-to="10">0</b><span>types de problèmes détectés</span></div>
@@ -555,7 +555,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
   </div>
 
   <!-- ══ EXEMPLE RÉEL ══ -->
-  <div class="card conv rv">
+  <div class="card conv reveal">
     <div class="ch"><span class="d"></span> Ce qu'une IA répond aujourd'hui, sans que vous le sachiez</div>
     <div class="msg">
       <p class="wq">« combien coûte la formation data à l'Institut Lumen »</p>
@@ -572,18 +572,18 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
 
   <!-- ══ DIAGNOSTIC PRIORISÉ ══ -->
   <section>
-    <div class="sh rv"><h2>On ne vous donne pas un score.<br>On vous donne la marche à suivre.</h2>
+    <div class="sh reveal"><h2>On ne vous donne pas un score.<br>On vous donne la marche à suivre.</h2>
       <p>Chaque problème est classé par gravité, expliqué, chiffré — et accompagné des étapes exactes pour le corriger.</p></div>
 
     <div class="sevshow">
-      <div class="sevcol rv d1">
+      <div class="sevcol reveal d1">
         <div class="sevrow c"><em>🔴</em><b>Critique</b><span>vous empêche d'être recommandé</span></div>
         <div class="sevrow i"><em>🟠</em><b>Important</b><span>réduit nettement la visibilité</span></div>
         <div class="sevrow a"><em>🟡</em><b>À améliorer</b><span>optimisation utile</span></div>
         <div class="sevrow o"><em>🟢</em><b>Optimisé</b><span>déjà correct</span></div>
       </div>
 
-      <div class="fixcard rv d2">
+      <div class="fixcard reveal d2">
         <span class="tagc">🔴 CRITIQUE</span>
         <h4>Tarif erroné dans les réponses des IA</h4>
         <p class="fixrow"><b>Pourquoi</b> L'IA cite 8 000 € alors que votre prix réel est 3 900 € — l'écart fausse toute comparaison.</p>
@@ -603,18 +603,18 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
 
   <!-- ══ COMMENT ══ -->
   <section id="comment">
-    <div class="sh rv"><h2>Trois minutes, pas trois réunions</h2>
+    <div class="sh reveal"><h2>Trois minutes, pas trois réunions</h2>
       <p>Vous n'écrivez aucune question. Tout se passe à l'écran.</p></div>
     <div class="trio">
-      <div class="st rv"><div class="nm">01</div><h3>Vous vous présentez</h3><p>Votre nom, votre activité, votre secteur. Les questions s'adaptent : école, commerce, chaîne, média, créateur.</p></div>
-      <div class="st rv d1"><div class="nm">02</div><h3>Quatre IA en parallèle</h3><p>Mistral, Claude, GPT et Gemini répondent en même temps. Vous voyez sur lesquelles vous existez — et sur lesquelles vous êtes absent.</p></div>
-      <div class="st rv d2"><div class="nm">03</div><h3>Vous corrigez</h3><p>Chaque problème avec sa cause, son coût, sa solution et ses étapes. Puis vous relancez un scan pour vérifier.</p></div>
+      <div class="st reveal"><div class="nm">01</div><h3>Vous vous présentez</h3><p>Votre nom, votre activité, votre secteur. Les questions s'adaptent : école, commerce, chaîne, média, créateur.</p></div>
+      <div class="st reveal d1"><div class="nm">02</div><h3>Quatre IA en parallèle</h3><p>Mistral, Claude, GPT et Gemini répondent en même temps. Vous voyez sur lesquelles vous existez — et sur lesquelles vous êtes absent.</p></div>
+      <div class="st reveal d2"><div class="nm">03</div><h3>Vous corrigez</h3><p>Chaque problème avec sa cause, son coût, sa solution et ses étapes. Puis vous relancez un scan pour vérifier.</p></div>
     </div>
   </section>
 
   <!-- ══ CTA ══ -->
   <section>
-    <div class="band rv">
+    <div class="band reveal">
       <h2>Trente secondes pour savoir</h2>
       <p>Un scan offert par compte, sans carte bancaire. Vous ne payez que si vous décidez de continuer.</p>
       <button class="btn b1 lg" onclick="startScan()">Lancer mon scan gratuit</button>
@@ -1814,7 +1814,7 @@ var DOUX = window.matchMedia && window.matchMedia('(prefers-reduced-motion: redu
 
 /* Apparition progressive au défilement */
 (function(){
-  var cibles = document.querySelectorAll('.rv');
+  var cibles = document.querySelectorAll('.reveal');
   if(DOUX || !window.IntersectionObserver){
     cibles.forEach(function(e){ e.classList.add('on'); });
     return;
