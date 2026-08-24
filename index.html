@@ -544,7 +544,61 @@
     .tcard:hover,.st:hover,.tile:hover{transform:none}
   }
 
+
+  /* ── Page Tarifs ── */
+  .plan{transition:transform .38s cubic-bezier(.2,.8,.3,1),border-color .38s,background .38s}
+  .plan:hover{transform:translateY(-6px);border-color:var(--ln2);background:var(--sf2)}
+  .plan.best{border-color:transparent;background:linear-gradient(180deg,rgba(123,107,255,.10),var(--sf))}
+  .plan.best::before{content:'';position:absolute;inset:0;border-radius:var(--r);padding:1px;
+    background:linear-gradient(160deg,rgba(123,107,255,.9),rgba(176,107,255,.35) 45%,rgba(123,107,255,.15));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+  .plan.best::after{content:'';position:absolute;inset:-30% -12% 40%;z-index:-1;border-radius:50%;
+    filter:blur(58px);pointer-events:none;
+    background:radial-gradient(circle,rgba(123,107,255,.34),transparent 70%)}
+  .plan.best:hover{transform:translateY(-9px)}
+  .plans{position:relative;z-index:1}
+  .plan .pp{transition:transform .3s}
+  .plan:hover .pp{transform:scale(1.03)}
+
+  .sw button{transition:background .28s,color .28s}
+  .save{animation:blink 3.4s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.62}}
+
+  /* Bandeau de réassurance sous les tarifs */
+  .assure{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:30px}
+  .assure span{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--dm);
+    padding:9px 16px;border-radius:999px;background:var(--sf);border:1px solid var(--ln)}
+  .assure svg{width:15px;height:15px;stroke:var(--ok);fill:none;stroke-width:2.4;
+    stroke-linecap:round;stroke-linejoin:round}
+
+  /* ── Page Connexion ── */
+  .authbox{position:relative}
+  .authbox::before{content:'';position:absolute;width:340px;height:340px;left:50%;top:-90px;
+    transform:translateX(-50%);border-radius:50%;filter:blur(72px);pointer-events:none;z-index:-1;
+    background:radial-gradient(circle,rgba(123,107,255,.26),transparent 68%)}
+  .authlogo img{box-shadow:0 14px 40px -12px rgba(123,107,255,.7)}
+  .prov{transition:transform .25s,border-color .25s,background .25s}
+  .prov:hover{transform:translateY(-2px)}
+  .authwhy{margin-top:20px;padding:16px 18px;border-radius:13px;background:var(--sf);
+    border:1px solid var(--ln);font-size:14.5px;color:var(--dm);line-height:1.6}
+  .authwhy b{color:var(--tx);font-weight:600}
+
+  /* ── Formulaire de scan ── */
+  .box{transition:border-color .3s}
+  .box:focus-within{border-color:rgba(123,107,255,.42)}
+  input:focus,select:focus{box-shadow:0 0 0 3px rgba(123,107,255,.14)}
+  #scanBtn{position:relative;overflow:hidden}
+
+  @media(max-width:520px){ .assure{gap:9px} .assure span{font-size:13.5px;padding:8px 13px} }
+  @media(prefers-reduced-motion:reduce){
+    .plan:hover,.plan.best:hover,.prov:hover{transform:none}
+    .save{animation:none}
+    .plan:hover .pp{transform:none}
+  }
+
   footer{border-top:1px solid var(--ln);
+
 
 padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--dm2)}
 
@@ -858,9 +912,10 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
     <button onclick="back()">Retour</button>
   </div>
   <section style="padding-top:6px">
-    <div class="sh" style="text-align:center;margin:0 auto 36px">
-      <h2>Une formule qui vous ressemble</h2><p>Changez ou arrêtez quand vous voulez.</p></div>
-    <div class="bill">
+    <div class="sh reveal" style="text-align:center;margin:0 auto 36px">
+      <h2>Commencez gratuitement. Payez quand ça vous rapporte.</h2>
+      <p>Le scan gratuit vous montre les problèmes. Les formules payantes vous donnent les corrections, le suivi et la comparaison.</p></div>
+    <div class="bill reveal">
       <div class="sw" role="group" aria-label="Facturation">
         <button type="button" id="bM" aria-pressed="true" onclick="setBill(false)">Mensuel</button>
         <button type="button" id="bY" aria-pressed="false" onclick="setBill(true)">Annuel</button>
@@ -868,7 +923,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
       <span class="save">2 mois offerts en annuel</span>
     </div>
     <div class="plans">
-      <div class="plan">
+      <div class="plan reveal">
         <div class="pn2">Découverte</div><p class="pf">Pour voir où vous en êtes.</p>
         <div class="pp"><span data-m="0 €" data-y="0 €">0 €</span></div>
         <p class="pnt">Un scan offert par compte</p>
@@ -882,7 +937,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
         </ul>
         <button class="btn b2 full" onclick="startScan()">Lancer mon scan</button>
       </div>
-      <div class="plan best">
+      <div class="plan best reveal d1">
         <span class="tg">Le plus choisi</span>
         <div class="pn2">Plus</div><p class="pf">Pour corriger et suivre vos progrès.</p>
         <div class="pp"><span data-m="149 €" data-y="119 €">149 €</span><span class="u"> /mois</span></div>
@@ -898,7 +953,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
         </ul>
         <button class="btn b1 full" onclick="pick('Plus')">Choisir Plus</button>
       </div>
-      <div class="plan">
+      <div class="plan reveal d2">
         <div class="pn2">Pro</div><p class="pf">Pour un marché disputé.</p>
         <div class="pp"><span data-m="349 €" data-y="279 €">349 €</span><span class="u"> /mois</span></div>
         <p class="pnt" data-mn="Sans engagement" data-yn="Facturé 3 348 €/an — 20 % de moins">Sans engagement</p>
@@ -912,7 +967,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
         </ul>
         <button class="btn b2 full" onclick="pick('Pro')">Choisir Pro</button>
       </div>
-      <div class="plan">
+      <div class="plan reveal d3">
         <div class="pn2">Agence</div><p class="pf">Pour suivre plusieurs marques.</p>
         <div class="pp"><span data-m="Sur devis" data-y="Sur devis">Sur devis</span></div>
         <p class="pnt">À partir de 890 € / mois</p>
@@ -926,7 +981,13 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
         <button class="btn b2 full" onclick="pick('Agence')">Nous contacter</button>
       </div>
     </div>
-    <p class="hint" style="text-align:center;margin-top:26px">Prix hors taxes · Données traitées en Europe</p>
+    <div class="assure reveal">
+      <span><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Sans engagement, résiliable à tout moment</span>
+      <span><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Changement de formule immédiat</span>
+      <span><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Données traitées en Europe</span>
+      <span><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Réponses archivées et vérifiables</span>
+    </div>
+    <p class="hint" style="text-align:center;margin-top:22px">Prix hors taxes · TVA applicable selon votre situation</p>
   </section>
 </div>
 </main>
@@ -952,6 +1013,10 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
       <div class="fld"><label class="fl" for="a-p">Mot de passe</label><input type="password" id="a-p" placeholder="8 caractères minimum" autocomplete="current-password" /></div>
       <button class="btn b1 full" id="aB" style="margin-top:5px" onclick="eAuth()">Créer mon compte</button>
       <p class="err hide" id="aE"></p><p class="ok hide" id="aO"></p>
+    </div>
+    <div class="authwhy">
+      <b>Pourquoi un compte ?</b> Pour conserver vos scans et mesurer votre progression dans le temps.
+      Nous ne demandons aucune coordonnée bancaire, et le scan gratuit reste offert.
     </div>
     <p style="text-align:center;margin-top:18px;color:var(--dm);font-size:15px">
       <span id="aSw">Vous avez déjà un compte ?</span>
