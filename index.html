@@ -219,6 +219,23 @@
   .pick:last-of-type{border-bottom:0}
   .pick input{width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--ac)}
 
+  /* ── Suivi des concurrents dans le temps ── */
+  .rivtrack{display:flex;flex-direction:column;gap:9px;margin:4px 0 10px}
+  .rivrow{display:grid;grid-template-columns:minmax(0,1fr) 90px 48px 72px;
+    align-items:center;gap:10px;font-size:14.5px}
+  .rvname{color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rvbar{height:7px;border-radius:4px;background:var(--sf);overflow:hidden;min-width:0}
+  .rvbar i{display:block;height:100%;border-radius:4px;
+    background:linear-gradient(90deg,#8B7BFF,#C9A6FF)}
+  .rvpct{color:var(--dm);text-align:right;font-variant-numeric:tabular-nums}
+  .rvup{color:var(--bad);font-weight:600;text-align:right}
+  .rvdown{color:var(--ok);font-weight:600;text-align:right}
+  .rvflat,.rvnew{color:var(--dm2);text-align:right}
+  @media(max-width:560px){
+    .rivrow{grid-template-columns:minmax(0,1fr) 46px 66px}
+    .rvbar{display:none}
+  }
+
   .alertbox{padding:13px 15px;border-radius:11px;margin-bottom:16px;font-size:15px;
     background:rgba(255,107,107,.09);border:1px solid rgba(255,107,107,.3);color:#FFC9C9}
   .evlist{list-style:none;margin:6px 0 16px;display:flex;flex-direction:column;gap:7px}
@@ -1825,15 +1842,15 @@ async function runScan(){
         }
         rows[i]={q:Q.q,named:Q.named,weight:Q.weight,engines:seen,mentioned:nb>0,nb:nb,any:any};
         document.getElementById('d'+i).className='dot '+(any?(Q.named?'':(nb?'h':'m')):'m');
-        document.getElementById('v'+i).textContent = !any ? 'echec'
-          : Q.named ? 'question de controle'
-          : (nb? ('cite sur '+nb+'/'+ENG.length+' IA') : 'absent partout');
+        document.getElementById('v'+i).textContent = !any ? 'échec'
+          : Q.named ? 'question de contrôle'
+          : (nb? ('citée sur '+nb+'/'+ENG.length+' IA') : 'absent partout');
         done++; tick();
       }
     }
     await Promise.all(new Array(CONC).fill(0).map(function(){return worker();}));
 
-    if(!rows.some(function(r){return r&&r.any;})) throw new Error("Aucune reponse obtenue.\n"+(firstErr||''));
+    if(!rows.some(function(r){return r&&r.any;})) throw new Error("Aucune réponse obtenue.\n"+(firstErr||''));
 
     /* Score par moteur : c'est ce qui montre ou la marque est bien ou mal referencee */
     var perEngine={}, tw=0, gw=0;
@@ -1847,7 +1864,7 @@ async function runScan(){
     var hits=blind.filter(function(r){return r.mentioned;}).length;
     var margin=Math.max(4,Math.round(38/Math.sqrt(blind.length*ENG.length||1)));
 
-    document.getElementById('progTitle').textContent='Analyse des reponses...';
+    document.getElementById('progTitle').textContent='Analyse des réponses…';
     var corpus=rows.filter(Boolean).map(function(r){
       var parts=r.engines.filter(function(x){return x.excerpt;})
         .map(function(x){return '['+(LAB[x.engine]||x.engine)+'] '+x.excerpt.slice(0,300);});
@@ -1862,7 +1879,7 @@ async function runScan(){
     }catch(err){ if(!warn) warn=err.message; }
 
     document.getElementById('progBar').style.width='100%';
-    document.getElementById('progTitle').textContent='Scan termine';
+    document.getElementById('progTitle').textContent='Scan terminé';
 
     var rivals=RIVAUX.map(function(r){
       return {name:r, hits:rivalHits[r], total:blind.length,
@@ -1872,7 +1889,7 @@ async function runScan(){
     var data={brand:d.brand,score:score,margin:margin,hits:hits,blindTotal:blind.length,rivals:rivals,
       engine:ENG.map(function(x){return LAB[x]||x;}).join(', '),
       perEngine:perEngine,isAdmin:!!st.isAdmin,plan:st.plan,label:st.label,locked:locked,
-      warning:(st.isAdmin&&warn)?warn:(failed?('Certaines requetes n ont pas abouti ('+failed+').'):null),
+      warning:(st.isAdmin&&warn)?warn:(failed?('Certaines requêtes n\x27ont pas abouti ('+failed+').'):null),
       results:rows.filter(Boolean).map(function(r){
         return {q:r.q,named:r.named,mentioned:r.mentioned,
                 excerpt:(r.engines.filter(function(x){return x.excerpt;})[0]||{}).excerpt||'',
@@ -1944,7 +1961,7 @@ function showResults(x){
       var m=pe[k], lvl=m.score>=55?'c':(m.score>=25?'b':'a');
       h+='<div class="pecard"><div class="pename">'+esc(m.label||k)+'</div>'
         +'<div class="pescore vlab '+lvl+'">'+m.score+'/100</div>'
-        +'<div class="pesub">cite dans '+m.hits+' reponse'+(m.hits>1?'s':'')+'</div></div>';
+        +'<div class="pesub">citée dans '+m.hits+' réponse'+(m.hits>1?'s':'')+'</div></div>';
     });
     h+='</div>';
   }
@@ -2067,26 +2084,68 @@ async function paintEvolution(id){
     var d=ev.delta;
     var fleche = d>0 ? ('&#9650; +'+d) : (d<0 ? ('&#9660; '+d) : '=');
     var coul = d>0 ? 'var(--ok)' : (d<0 ? 'var(--bad)' : 'var(--dm2)');
+
     var h='<div class="panel" id="evolPanel">';
     if(ev.alert){
-      h+='<div class="alertbox">&#9888; Alerte visibilite : votre score a chute de '
-        +Math.abs(d)+' points depuis le scan precedent.</div>';
+      h+='<div class="alertbox">&#9888; <b>Alerte visibilité</b> — votre score a chuté de '
+        +Math.abs(d)+' points depuis le scan précédent.</div>';
     }
-    h+='<h3>Evolution depuis le dernier scan</h3>'
-      +'<p class="ph">Scan precedent du '+new Date(ev.previousAt).toLocaleDateString('fr-FR')
+    if(ev.rivalAlert){
+      h+='<div class="alertbox">&#9888; <b>Alerte concurrence</b> — '+esc(ev.rivalAlert.name)
+        +' est passé de '+ev.rivalAlert.previousShare+'&nbsp;% à '+ev.rivalAlert.share
+        +'&nbsp;% des réponses, soit +'+ev.rivalAlert.delta+' points sur les questions '
+        +'où votre nom n\'est pas cité.</div>';
+    }
+
+    h+='<h3>Évolution depuis le dernier scan</h3>'
+      +'<p class="ph">Scan précédent du '+new Date(ev.previousAt).toLocaleDateString('fr-FR')
       +' &middot; score '+ev.previousScore+' &rarr; '+ev.score
       +' <b style="color:'+coul+'">'+fleche+'</b></p>';
+
     if((ev.fixed||[]).length){
-      h+='<p class="findline"><b>Problemes corriges</b></p><ul class="evlist evok">'
+      h+='<p class="findline"><b>Problèmes corrigés</b></p><ul class="evlist evok">'
         +ev.fixed.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>';
     }
     if((ev.appeared||[]).length){
-      h+='<p class="findline"><b>Nouveaux problemes</b></p><ul class="evlist evbad">'
+      h+='<p class="findline"><b>Nouveaux problèmes</b></p><ul class="evlist evbad">'
         +ev.appeared.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>';
     }
     if(!(ev.fixed||[]).length && !(ev.appeared||[]).length){
-      h+='<p class="ph">Aucun changement dans les problemes detectes.</p>';
+      h+='<p class="ph">Aucun changement dans les problèmes détectés.</p>';
     }
+
+    /* Suivi des concurrents : la part de citations de chacun, et son
+       déplacement depuis le scan précédent. */
+    var rv = ev.rivals || [];
+    if(rv.length){
+      h+='<p class="findline"><b>Vos concurrents dans les réponses</b></p>'
+        +'<div class="rivtrack">';
+      rv.forEach(function(c){
+        var mouv;
+        if(c.delta === null){
+          mouv='<span class="rvnew">nouveau</span>';
+        }else if(c.delta > 0){
+          mouv='<span class="rvup">&#9650; +'+c.delta+'</span>';
+        }else if(c.delta < 0){
+          mouv='<span class="rvdown">&#9660; '+c.delta+'</span>';
+        }else{
+          mouv='<span class="rvflat">stable</span>';
+        }
+        h+='<div class="rivrow">'
+          +'<span class="rvname">'+esc(c.name)+'</span>'
+          +'<span class="rvbar"><i style="width:'+Math.min(100,c.share)+'%"></i></span>'
+          +'<span class="rvpct">'+c.share+'&nbsp;%</span>'
+          +mouv+'</div>';
+      });
+      h+='</div>'
+        +'<p class="hint">Part des réponses où votre marque n\'est pas citée et où ce '
+        +'concurrent l\'est. La flèche compare au scan précédent.</p>';
+    }
+    if((ev.rivalsGone||[]).length){
+      h+='<p class="ph"><b>N\'apparaissent plus :</b> '
+        +ev.rivalsGone.map(esc).join(', ')+'.</p>';
+    }
+
     h+='</div>';
     var box=document.getElementById('scanRes');
     var vieux=document.getElementById('evolPanel'); if(vieux) vieux.remove();

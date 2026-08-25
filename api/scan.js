@@ -212,7 +212,11 @@ async function ask(name, prompt, mx, json) {
       last = err;
       // 429 = limite de débit, 5xx = incident passager : on repasse après une pause.
       if (!/(^|\D)(429|500|502|503|529)(\D|$)/.test(String(err.message))) break;
-      await new Promise(r => setTimeout(r, 900 * (essai + 1)));
+      // Attente croissante, avec une part aléatoire : sans elle, les vingt appels
+      // lancés de front repartiraient tous à la même seconde et se feraient
+      // refuser ensemble.
+      const pause = 900 * (essai + 1) * (1 + Math.random() * 0.6);
+      await new Promise(r => setTimeout(r, pause));
     }
   }
   throw last || new Error('Appel impossible');
@@ -640,7 +644,7 @@ Règles :
       const q = `${SUPABASE_URL}/rest/v1/scans?user_id=eq.${user.id}`
         + `&brand=eq.${encodeURIComponent(cur.brand)}`
         + `&created_at=lt.${encodeURIComponent(cur.created_at)}`
-        + `&select=id,created_at,score,problems&order=created_at.desc&limit=1`;
+        + `&select=id,created_at,score,problems,rivals&order=created_at.desc&limit=1`;
       const r2 = await fetch(q, { headers: svc(svcKey) });
       const prev = (r2.ok ? await r2.json() : [])[0];
       if (!prev) return ok({ evolution: null });
@@ -656,13 +660,43 @@ Règles :
       const apres = (cur.problems  || []).filter(estProbleme).map(cle).filter(Boolean);
       const corriges = (prev.problems || []).filter(x => estProbleme(x) && cle(x) && !apres.includes(cle(x)));
       const nouveaux = (cur.problems  || []).filter(x => estProbleme(x) && cle(x) && !avant.includes(cle(x)));
+      // Suivi des concurrents dans le temps : on compare la part de citations
+      // de chaque concurrent entre les deux scans. Un concurrent qui monte
+      // pendant que la marque stagne est le signal le plus utile du rapport.
+      const parNom = liste => {
+        const m = {};
+        (Array.isArray(liste) ? liste : []).forEach(x => {
+          const n = String((x && x.name) || '').trim();
+          if (n) m[n.toLowerCase()] = { name: n, share: Number(x.share) || 0 };
+        });
+        return m;
+      };
+      const rAvant = parNom(prev.rivals), rApres = parNom(cur.rivals);
+      const rivaux = Object.keys(rApres).map(k => ({
+        name: rApres[k].name,
+        share: rApres[k].share,
+        previousShare: rAvant[k] ? rAvant[k].share : null,
+        delta: rAvant[k] ? rApres[k].share - rAvant[k].share : null
+      })).sort((a, b) => b.share - a.share).slice(0, 5);
+
+      // Un concurrent suivi au scan precedent et absent du scan courant a
+      // disparu des reponses : c'est une bonne nouvelle, on la dit.
+      const disparus = Object.keys(rAvant)
+        .filter(k => !rApres[k] && rAvant[k].share > 0)
+        .map(k => rAvant[k].name).slice(0, 5);
+
+      // Une percée nette d'un concurrent est une alerte au même titre qu'une
+      // chute de score : c'est souvent elle qui bouge en premier.
+      const monteeRivale = rivaux.find(r => r.delta !== null && r.delta >= 15) || null;
       const delta = (cur.score == null || prev.score == null) ? null : cur.score - prev.score;
 
       return ok({ evolution: {
         previousAt: prev.created_at, previousScore: prev.score, score: cur.score, delta,
         fixed: corriges.map(x => x.title).slice(0, 12),
         appeared: nouveaux.map(x => x.title).slice(0, 12),
-        alert: !!cap.alerts && delta !== null && delta <= -10
+        rivals: rivaux, rivalsGone: disparus,
+        alert: !!cap.alerts && delta !== null && delta <= -10,
+        rivalAlert: (cap.alerts && monteeRivale) ? monteeRivale : null
       }});
     } catch (e) { return ok({ evolution: null }); }
   }
@@ -821,3 +855,7 @@ Règles :
 
 
 } };
+
+/* Exportés pour la suite de tests. Vercel n'utilise que l'export par défaut :
+   ces exports supplémentaires n'ont aucun effet sur le déploiement. */
+export { PLANS, ENGINES, INTENTS, VARIANTS, questions, looseParse, isAdminEmail };
