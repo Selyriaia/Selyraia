@@ -935,7 +935,7 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
           <option value="school">École privée, université, organisme de formation</option>
           <option value="creator">Créateur de contenu (Twitch, YouTube, TikTok, Instagram)</option>
           <option value="media">Média, télévision, radio, presse</option>
-          <option value="default">Autre activité</option>
+          <option value="autre">Autre activité</option>
         </select>
       </div>
       <div class="fld hide" id="clientBox">
@@ -1204,6 +1204,16 @@ var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null,history:
 var VIEWS=['home','scan','plans','auth','app'];
 var stack=['home'];
 
+/* Une marque ou un concurrent ne compte que s'il apparait comme un mot entier :
+   sans cela « Data » correspondait a « database » et gonflait le score. */
+function echapReg(t){ return String(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function citeDans(texte, nom){
+  if(!texte || !nom) return false;
+  try{
+    return new RegExp('(?:^|[^\\p{L}\\p{N}])'+echapReg(nom)+'(?:$|[^\\p{L}\\p{N}])','iu').test(texte);
+  }catch(e){ return String(texte).toLowerCase().indexOf(String(nom).toLowerCase())>=0; }
+}
+
 function esc(t){var d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;}
 function render(v){
   VIEWS.forEach(function(x){document.getElementById('v-'+x).classList.toggle('hide',x!==v);});
@@ -1432,7 +1442,33 @@ function paintQuota(){
       (S.me.dbError?'<br><span style="color:var(--wn)">Base : '+esc(S.me.dbError)+'</span>':'');
     b.classList.remove('hide'); btn.disabled=false; btn.textContent='Lancer le scan'; return;
   }
-  var left=Math.max(0,S.me.quota-S.me.scansUsed);
+  /* Le quota n'est plus un compteur mais une cadence : on lit oneShot,
+     nextScanAt et everyHours, que le serveur renvoie reellement. */
+  btn.disabled=false; btn.textContent='Lancer le scan';
+  b.classList.remove('hide');
+
+  if(S.me.oneShot){
+    if((S.me.scansUsed||0)>=1){
+      b.innerHTML='<b>Votre scan gratuit a déjà été utilisé.</b> Choisissez une formule pour relancer un scan.';
+      btn.disabled=true; btn.textContent='Scan indisponible';
+    }else{
+      b.innerHTML='Formule <b>'+esc(S.me.label||S.me.plan)+'</b> · <b>1 scan offert</b>, disponible maintenant.';
+    }
+    return;
+  }
+
+  var reste = S.me.nextScanAt ? (S.me.nextScanAt - Date.now()) : 0;
+  if(reste > 0){
+    var h = Math.max(1, Math.ceil(reste/3600000));
+    b.innerHTML='Formule <b>'+esc(S.me.label||S.me.plan)+'</b> · prochain scan disponible dans <b>'+h+' h</b>.';
+    btn.disabled=true; btn.textContent='Disponible dans '+h+' h';
+  }else{
+    b.innerHTML='Formule <b>'+esc(S.me.label||S.me.plan)+'</b> · scan disponible maintenant'+
+      (S.me.everyHours?' · 1 scan toutes les '+S.me.everyHours+' h':'')+'.';
+  }
+  return;
+  /* ancien affichage, neutralise */
+  var left=0;
   if(left<=0){
     b.innerHTML='<b>Votre scan gratuit a déjà été utilisé.</b> Choisissez une formule pour relancer un scan.';
     b.classList.remove('hide'); btn.disabled=true; btn.textContent='Scan indisponible';
@@ -1508,7 +1544,7 @@ async function runScan(){
     /* Concurrents designes : on les compte sur le texte integral, question
        par question, exactement comme la marque analysee. */
     var RIVAUX=(document.getElementById('f-rivals').value||'').split(',')
-      .map(function(x){return x.trim();}).filter(function(x){return x.length>1;})
+      .map(function(x){return x.trim();}).filter(function(x){return x.length>2;})
       .slice(0,(S.me&&S.me.competitors)||0);
     var rivalHits={}; RIVAUX.forEach(function(r){ rivalHits[r]=0; });
 
@@ -1535,7 +1571,7 @@ async function runScan(){
         }));
         var seen=[], nb=0, any=false;
         res.forEach(function(r){
-          var men=!!r.text && r.text.toLowerCase().indexOf(brandLc)>=0;
+          var men=citeDans(r.text, d.brand);
           if(r.text){ any=true; per[r.eng].ok++;
             if(!Q.named){ per[r.eng].tw+=(Q.weight||1);
               if(men){ per[r.eng].gw+=(Q.weight||1); per[r.eng].hits++; } } }
@@ -1544,7 +1580,7 @@ async function runScan(){
         });
         if(!Q.named && any){
           var tout=res.map(function(r){return r.text||'';}).join(' ').toLowerCase();
-          RIVAUX.forEach(function(r){ if(tout.indexOf(r.toLowerCase())>=0) rivalHits[r]++; });
+          RIVAUX.forEach(function(r){ if(citeDans(tout, r)) rivalHits[r]++; });
         }
         rows[i]={q:Q.q,named:Q.named,weight:Q.weight,engines:seen,mentioned:nb>0,nb:nb,any:any};
         document.getElementById('d'+i).className='dot '+(any?(Q.named?'':(nb?'h':'m')):'m');
@@ -2066,7 +2102,9 @@ function paintDash(){
   document.getElementById('uN').textContent=S.user.email;
   document.getElementById('uP').textContent=S.me?(S.me.isAdmin?'Administrateur':'Formule '+S.me.plan):'—';
   document.getElementById('setPlan').textContent=S.me?(S.me.isAdmin?'Administrateur':S.me.plan):'—';
-  document.getElementById('setQuota').textContent=S.me?(S.me.isAdmin?'Scans illimités.':'Scans utilisés : '+S.me.scansUsed+' sur '+S.me.quota+'.'):'—';
+  document.getElementById('setQuota').textContent=!S.me ? '—' : S.me.isAdmin ? 'Scans illimités.'
+    : S.me.oneShot ? ('Scan gratuit : '+((S.me.scansUsed||0)>=1?'déjà utilisé':'disponible')+'.')
+    : ('1 scan toutes les '+S.me.everyHours+' h · '+(S.me.scansUsed||0)+' scan(s) sur la période en cours.');
   var ls=document.getElementById('lastScan');
   if(S.last){
     document.getElementById('dashSub').textContent='Dernier scan sur « '+S.last.brand+' ».';

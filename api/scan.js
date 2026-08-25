@@ -93,13 +93,28 @@ async function getProfile(id, email, key) {
   } catch (e) { return { _err: 'Supabase injoignable : ' + e.message }; }
 }
 
-async function bump(id, n, key) {
+// Renvoie true seulement si Supabase a bien enregistre. Sans ce controle, un
+// echec silencieux du PATCH rendait le quota gratuit contournable a l'infini.
+async function bump(id, n, key, budget) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}`, {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}`, {
       method: 'PATCH', headers: svc(key),
-      body: JSON.stringify({ scans_used: n + 1, last_scan_at: new Date().toISOString() })
+      body: JSON.stringify({ scans_used: n + 1, last_scan_at: new Date().toISOString(),
+                             scan_budget: budget })
     });
-  } catch {}
+    return r.ok;
+  } catch { return false; }
+}
+
+// Decrement atomique du budget d'appels IA du scan en cours.
+async function consommerBudget(id, key) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_scan_budget`, {
+      method: 'POST', headers: svc(key), body: JSON.stringify({ p_user: id })
+    });
+    if (!r.ok) return -1;
+    return Number(await r.json());
+  } catch { return -1; }
 }
 
 // Remet le compteur à zéro quand la période mensuelle est écoulée (formules payantes).
@@ -246,32 +261,32 @@ const INTENTS = {
     [1.1, (a, w) => `Quel diplôme en ${a}${w} vaut vraiment l'investissement ?`]
   ],
   creator: [
-    [3.0, (a, w) => `Quels créateurs de contenu français suivre en ${a} ? Cite des noms précis.`],
-    [3.0, (a, w) => `Quelle chaîne ou quel compte suivre pour du ${a} en français ?`],
-    [2.6, (a, w) => `Quels créateurs ${a} sont les plus recommandés ?`],
-    [2.5, (a, w) => `Je débute et je cherche du contenu ${a} de qualité, qui me conseilles-tu ?`],
-    [2.2, (a, w) => `Quels créateurs ${a} francophones ont le plus d'influence ?`],
-    [2.0, (a, w) => `Où trouver du bon contenu ${a} en français ?`],
-    [1.8, (a, w) => `Quels créateurs ${a} sont les plus fiables et les mieux documentés ?`],
-    [1.7, (a, w) => `Quelles alternatives aux gros créateurs ${a} francophones ?`],
-    [1.5, (a, w) => `Quels comptes ${a} suivre pour progresser vraiment ?`],
-    [1.4, (a, w) => `Quels créateurs ${a} montent le plus en ce moment ?`],
-    [1.2, (a, w) => `Quels créateurs ${a} conseillerais-tu à un ami ?`],
-    [1.1, (a, w) => `Quels créateurs ${a} produisent le contenu le plus sérieux ?`]
+    [3.0, (a, w) => `Quels créateurs de contenu français suivre en ${a}${w} ? Cite des noms précis.`],
+    [3.0, (a, w) => `Quelle chaîne ou quel compte suivre pour du ${a}${w} en français ?`],
+    [2.6, (a, w) => `Quels créateurs ${a}${w} sont les plus recommandés ?`],
+    [2.5, (a, w) => `Je débute et je cherche du contenu ${a}${w} de qualité, qui me conseilles-tu ?`],
+    [2.2, (a, w) => `Quels créateurs ${a}${w} francophones ont le plus d'influence ?`],
+    [2.0, (a, w) => `Où trouver du bon contenu ${a}${w} en français ?`],
+    [1.8, (a, w) => `Quels créateurs ${a}${w} sont les plus fiables et les mieux documentés ?`],
+    [1.7, (a, w) => `Quelles alternatives aux gros créateurs ${a}${w} francophones ?`],
+    [1.5, (a, w) => `Quels comptes ${a}${w} suivre pour progresser vraiment ?`],
+    [1.4, (a, w) => `Quels créateurs ${a}${w} montent le plus en ce moment ?`],
+    [1.2, (a, w) => `Quels créateurs ${a}${w} conseillerais-tu à un ami ?`],
+    [1.1, (a, w) => `Quels créateurs ${a}${w} produisent le contenu le plus sérieux ?`]
   ],
   media: [
     [3.0, (a, w) => `Quels médias suivre pour du ${a}${w} ? Cite des noms.`],
-    [3.0, (a, w) => `Quel média est la référence en ${a} en France ?`],
-    [2.6, (a, w) => `Quels sont les médias ${a} les plus fiables ?`],
-    [2.5, (a, w) => `Où s'informer sérieusement sur ${a} ?`],
-    [2.2, (a, w) => `Quels médias français traitent le mieux de ${a} ?`],
-    [2.0, (a, w) => `Quelles alternatives aux grands médias pour ${a} ?`],
-    [1.8, (a, w) => `Quels médias ${a} pour un lecteur exigeant ?`],
-    [1.7, (a, w) => `Quels médias ${a} sont les plus indépendants ?`],
-    [1.5, (a, w) => `Comment choisir sa source d'information en ${a} ?`],
-    [1.4, (a, w) => `Quels médias ${a} sont les plus consultés ?`],
-    [1.2, (a, w) => `Quels médias ${a} recommanderais-tu à un proche ?`],
-    [1.1, (a, w) => `Quels médias ${a} évitent les approximations ?`]
+    [3.0, (a, w) => `Quel média est la référence en ${a}${w} en France ?`],
+    [2.6, (a, w) => `Quels sont les médias ${a}${w} les plus fiables ?`],
+    [2.5, (a, w) => `Où s'informer sérieusement sur ${a}${w} ?`],
+    [2.2, (a, w) => `Quels médias français traitent le mieux de ${a}${w} ?`],
+    [2.0, (a, w) => `Quelles alternatives aux grands médias pour ${a}${w} ?`],
+    [1.8, (a, w) => `Quels médias ${a}${w} pour un lecteur exigeant ?`],
+    [1.7, (a, w) => `Quels médias ${a}${w} sont les plus indépendants ?`],
+    [1.5, (a, w) => `Comment choisir sa source d'information en ${a}${w} ?`],
+    [1.4, (a, w) => `Quels médias ${a}${w} sont les plus consultés ?`],
+    [1.2, (a, w) => `Quels médias ${a}${w} recommanderais-tu à un proche ?`],
+    [1.1, (a, w) => `Quels médias ${a}${w} évitent les approximations ?`]
   ]
 };
 
@@ -282,7 +297,9 @@ const VARIANTS = ['', ' en 2026', ' avec de très bons retours', ' pour un budge
 function questions(d, count) {
   const { brand, activity, city, type } = d;
   const base = city ? ` à ${city}` : ' en France';
-  const bank = INTENTS[type] || INTENTS.default;
+  // Lookup protege : un type comme « hasOwnProperty » remontait la chaine de
+  // prototypes et faisait planter la generation des questions.
+  const bank = Array.isArray(INTENTS[type]) ? INTENTS[type] : INTENTS.default;
   const target = Math.max(6, Number(count) || 8) - 2;   // 2 questions de contrôle
   const out = [];
   for (let v = 0; v < VARIANTS.length && out.length < target; v++) {
@@ -292,6 +309,12 @@ function questions(d, count) {
                  weight: Math.round(weight * (1 - v * 0.12) * 100) / 100 });
     }
   }
+  // Filet : si un modèle oubliait d'utiliser le complément, on ne renvoie
+  // jamais deux fois la même question au client.
+  const vues = new Set();
+  const uniques = out.filter(q => vues.has(q.q) ? false : (vues.add(q.q), true));
+  out.length = 0; out.push(...uniques);
+
   // Questions de contrôle : le nom est cité, elles ne comptent pas dans le score.
   out.push({ q: `Que vaut ${brand} ? Que proposent-ils exactement et à quel prix ?`, named: true, weight: 0 });
   out.push({ q: `Quels sont les tarifs, les conditions et la réputation de ${brand} ?`, named: true, weight: 0 });
@@ -372,6 +395,8 @@ export default { async fetch(request) {
       actions: cap.actions, fixes: !!cap.fixes, history: cap.history, alerts: cap.alerts,
       pdf: cap.pdf, agency: cap.agency, everyHours: cap.everyHours, oneShot: cap.oneShot,
       scansUsed: used, nextScanAt: nextAt || null,
+      quota: cap.oneShot ? 1 : null,          // le client s'en sert pour l'affichage
+      waiting, exhausted,
       canScan: admin || (!waiting && !exhausted),
       plans: Object.keys(PLANS).map(k => ({ key: k, label: PLANS[k].label })),
       dbError: admin ? dbError : null
@@ -385,6 +410,14 @@ export default { async fetch(request) {
     const FENETRE_MS = 20 * 60 * 1000;
     if (!lastAt || Date.now() - lastAt > FENETRE_MS) {
       return fail("Aucun scan en cours. Relancez un scan depuis la page prevue.", 403);
+    }
+    // La fenetre de 20 min ne suffit pas : sans budget, on pouvait appeler
+    // « ask » en boucle et vider les cles API. Chaque appel consomme un jeton.
+    if (svcKey) {
+      const reste = await consommerBudget(user.id, svcKey);
+      if (reste < 0) {
+        return fail("Budget de ce scan epuise. Relancez un scan depuis la page prevue.", 429);
+      }
     }
   }
 
@@ -414,10 +447,20 @@ export default { async fetch(request) {
     };
     if (d.brand.length < 2 || d.activity.length < 2) return fail('Nom et activité requis.', 400);
 
-    if (!admin && svcKey) await bump(user.id, used, svcKey);
+    // On genere AVANT de consommer le quota : si la generation echoue, le
+    // scan gratuit de l'utilisateur n'est pas perdu pour rien.
+    const listeQuestions = questions(d, cap.questions);
+
+    // Budget : une question par moteur, plus une marge pour l'analyse et les reprises.
+    const budget = listeQuestions.length * Math.max(1, allowed.length) + 8;
+
+    if (!admin && svcKey) {
+      const enregistre = await bump(user.id, used, svcKey, budget);
+      if (!enregistre) return fail("Impossible d'enregistrer le scan. Reessayez.", 500);
+    }
 
     return ok({
-      questions: questions(d, cap.questions),
+      questions: listeQuestions,
       engines: allowed,
       engineLabels: allowed.reduce((o, e) => (o[e] = ENGINES[e].label, o), {}),
       plan, label: cap.label, isAdmin: admin, simulating: sim,
@@ -601,10 +644,13 @@ Règles :
       // libelle : l'IA reformule a chaque scan, ce qui faisait apparaitre
       // comme "corriges" des problemes simplement reecrits autrement.
       const cle = x => String((x && (x.code || x.title)) || '').trim().toLowerCase();
-      const avant = (prev.problems || []).map(cle).filter(Boolean);
-      const apres = (cur.problems  || []).map(cle).filter(Boolean);
-      const corriges = (prev.problems || []).filter(x => cle(x) && !apres.includes(cle(x)));
-      const nouveaux = (cur.problems  || []).filter(x => cle(x) && !avant.includes(cle(x)));
+      // Un constat « optimise » est un point DEJA correct : le faire apparaitre
+      // comme probleme corrige ou nouveau probleme trompe le client.
+      const estProbleme = x => x && String(x.severity || '').toLowerCase() !== 'optimise';
+      const avant = (prev.problems || []).filter(estProbleme).map(cle).filter(Boolean);
+      const apres = (cur.problems  || []).filter(estProbleme).map(cle).filter(Boolean);
+      const corriges = (prev.problems || []).filter(x => estProbleme(x) && cle(x) && !apres.includes(cle(x)));
+      const nouveaux = (cur.problems  || []).filter(x => estProbleme(x) && cle(x) && !avant.includes(cle(x)));
       const delta = (cur.score == null || prev.score == null) ? null : cur.score - prev.score;
 
       return ok({ evolution: {
@@ -753,7 +799,10 @@ Règles :
     if (!PLANS[vise]) return fail('Formule inconnue.', 400);
     // Changer de formule remet la periode a zero : le client repart avec
     // ses droits pleins, sans heriter du compteur de l'ancienne formule.
-    const patch = { plan: vise, scans_used: 0, period_start: new Date().toISOString() };
+    // last_scan_at doit repartir a zero, sinon un client qui vient de payer
+    // reste bloque jusqu'a 48 h par la cadence de sa nouvelle formule.
+    const patch = { plan: vise, scans_used: 0, period_start: new Date().toISOString(),
+                    last_scan_at: null, scan_budget: 0 };
     try {
       const r = await sb(`profiles?id=eq.${cible}`, { method: 'PATCH',
         headers: { ...svc(svcKey), Prefer: 'return=representation' }, body: JSON.stringify(patch) });
