@@ -668,6 +668,38 @@
     .kp:hover,.pecard:hover,.rv:hover,.find:hover,.hrow:hover{transform:none}
   }
 
+  /* ── Pages légales ── */
+  .legal{max-width:770px;padding:10px 0 76px}
+  .legal h1{font-size:clamp(28px,3.4vw,40px);letter-spacing:-.03em;font-weight:600;margin:22px 0 8px}
+  .legal .maj{font-size:14px;color:var(--dm2);margin-bottom:32px}
+  .legal h2{font-size:20px;letter-spacing:-.02em;font-weight:600;margin:34px 0 12px;
+    padding-top:24px;border-top:1px solid var(--ln)}
+  .legal p,.legal li{font-size:15.5px;color:var(--dm);line-height:1.68}
+  .legal p{margin-bottom:12px}
+  .legal ul{margin:0 0 15px 20px;display:flex;flex-direction:column;gap:7px}
+  .legal b{color:var(--tx);font-weight:600}
+  .legal a{color:#A99BFF;text-decoration:underline;text-underline-offset:3px}
+  .legal .tofill{background:rgba(255,196,107,.10);border:1px solid rgba(255,196,107,.28);
+    border-radius:11px;padding:14px 16px;font-size:14.5px;color:#EFD6A8;line-height:1.6;margin:0 0 26px}
+  .legal .wrapt{overflow-x:auto;margin:6px 0 18px;-webkit-overflow-scrolling:touch}
+  .legal table{width:100%;min-width:460px;border-collapse:collapse;font-size:14.5px}
+  .legal th,.legal td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--ln);
+    color:var(--dm);vertical-align:top;line-height:1.5}
+  .legal th{color:var(--tx);font-weight:600;white-space:nowrap}
+
+  /* ── Bandeau traceurs ── */
+  .cbanner{position:fixed;left:14px;right:14px;bottom:14px;z-index:90;max-width:560px;margin:0 auto;
+    padding:18px 20px;border-radius:15px;
+    background:linear-gradient(150deg,rgba(30,32,40,.985),rgba(14,16,20,.99));
+    border:1px solid var(--ln2);box-shadow:0 26px 64px -18px rgba(0,0,0,.9)}
+  .cbanner p{font-size:14.5px;color:var(--dm);line-height:1.6;margin-bottom:14px}
+  .cbanner .crow{display:flex;gap:10px;flex-wrap:wrap}
+  @media(max-width:520px){.cbanner .crow .btn{flex:1}}
+
+  footer a{color:var(--dm);text-decoration:none}
+  footer a:hover{color:var(--tx);text-decoration:underline}
+  .flinks{display:flex;flex-wrap:wrap;gap:8px 18px}
+
   footer{border-top:1px solid var(--ln);
 
 
@@ -1180,9 +1212,182 @@ padding:28px 0;display:flex;justify-content:space-between;gap:14px;flex-wrap:wra
 </div></div>
 </main>
 
+<!-- MENTIONS LEGALES -->
+<main id="v-legal" class="hide">
+<div class="wrap"><div class="legal">
+  <div class="navbar2"><button onclick="go('home')">&larr; Accueil</button></div>
+  <h1>Mentions légales</h1>
+  <p class="maj">Dernière mise à jour : 25 août 2026</p>
+
+  <div class="tofill"><b>Document provisoire.</b> Les champs entre crochets restent à renseigner.
+  Ils seront remplacés par les informations de la société dès son immatriculation, avant toute mise
+  en service commerciale du site.</div>
+
+  <h2>Éditeur du site</h2>
+  <p>Le site <b>selyraia.com</b> est édité par :</p>
+  <ul>
+    <li><b>[Prénom NOM]</b>, personne physique</li>
+    <li>Adresse : <b>[adresse postale complète]</b></li>
+    <li>Courriel : <b>[contact@selyraia.com]</b></li>
+  </ul>
+  <p><b>Directeur de la publication :</b> [Prénom NOM].</p>
+  <p>Une société est en cours de constitution. Dès son immatriculation, cette rubrique indiquera sa
+  dénomination, sa forme juridique, le montant de son capital social, l'adresse de son siège, son
+  numéro d'identification au RCS et, le cas échéant, son numéro de TVA intracommunautaire.</p>
+
+  <h2>Hébergement</h2>
+  <ul>
+    <li><b>Vercel Inc.</b> — hébergement du site</li>
+    <li>440 N. Barranca Ave #4133, Covina, Californie 91723, États-Unis</li>
+    <li><a href="https://vercel.com" target="_blank" rel="noopener">vercel.com</a></li>
+  </ul>
+  <p>Les comptes et les résultats de scans sont hébergés par <b>Supabase</b> dans une région
+  européenne.</p>
+
+  <h2>Propriété intellectuelle</h2>
+  <p>La structure du site, ses textes, son interface, sa marque et son logo sont protégés par le
+  droit de la propriété intellectuelle. Toute reproduction ou représentation, totale ou partielle,
+  sans autorisation écrite préalable est interdite.</p>
+  <p>En revanche, <b>les rapports générés pour un utilisateur lui appartiennent</b> : il peut les
+  exporter, les diffuser et les exploiter librement.</p>
+
+  <h2>Nature du service et limites</h2>
+  <p>Selyraia mesure la façon dont des systèmes d'intelligence artificielle générative évoquent une
+  marque à un instant donné. Ces systèmes sont <b>non déterministes</b> : deux exécutions identiques
+  peuvent produire des réponses différentes.</p>
+  <p>C'est pourquoi chaque score est publié <b>avec sa marge d'incertitude</b>. Il ne constitue ni une
+  garantie de résultat, ni un conseil professionnel. Les recommandations sont des pistes
+  d'amélioration : leur effet sur les réponses des moteurs ne peut pas être garanti.</p>
+
+  <h2>Signalement</h2>
+  <p>Pour signaler une erreur ou un contenu litigieux : <b>[contact@selyraia.com]</b>.</p>
+
+  <h2>Droit applicable</h2>
+  <p>Le site est soumis au droit français. Tout litige relève de la compétence des tribunaux
+  français.</p>
+</div></div>
+</main>
+
+<!-- CONFIDENTIALITE -->
+<main id="v-privacy" class="hide">
+<div class="wrap"><div class="legal">
+  <div class="navbar2"><button onclick="go('home')">&larr; Accueil</button></div>
+  <h1>Politique de confidentialité</h1>
+  <p class="maj">Dernière mise à jour : 25 août 2026 · Règlement général sur la protection des données</p>
+
+  <div class="tofill"><b>Document provisoire.</b> Le responsable de traitement est aujourd'hui une
+  personne physique. Cette politique sera reprise au nom de la société dès son immatriculation.</div>
+
+  <h2>Responsable de traitement</h2>
+  <p><b>[Prénom NOM]</b> — [adresse postale complète] — <b>[contact@selyraia.com]</b>.</p>
+
+  <h2>Ce que nous collectons</h2>
+  <div class="wrapt"><table>
+    <tr><th>Donnée</th><th>Origine</th><th>À quoi elle sert</th></tr>
+    <tr><td>Adresse e-mail</td><td>Inscription, ou connexion via Google</td><td>Créer et sécuriser votre compte</td></tr>
+    <tr><td>Identifiant de compte</td><td>Généré automatiquement</td><td>Rattacher vos scans à vous seul</td></tr>
+    <tr><td>Nom de marque, activité, ville, tarif</td><td>Saisis par vous</td><td>Construire les questions posées aux moteurs</td></tr>
+    <tr><td>Résultats de scans et historique</td><td>Produits par le service</td><td>Vous montrer votre évolution</td></tr>
+    <tr><td>Formule et cadence de scan</td><td>Produits par le service</td><td>Appliquer les droits de votre offre</td></tr>
+  </table></div>
+  <p>Nous ne collectons <b>aucune donnée bancaire</b> : aucun paiement n'est traité sur ce site à ce
+  jour. Nous n'utilisons <b>ni traceur publicitaire, ni outil de mesure d'audience</b>.</p>
+
+  <h2>Sur quelle base légale</h2>
+  <ul>
+    <li><b>Exécution du contrat</b> — votre compte, vos scans, votre historique, l'application de votre formule.</li>
+    <li><b>Intérêt légitime</b> — sécurité du service et prévention des abus.</li>
+    <li><b>Obligation légale</b> — conservation comptable, le cas échéant.</li>
+  </ul>
+
+  <h2>Qui traite vos données</h2>
+  <p>Vos données ne sont ni vendues, ni louées, ni cédées. Elles sont traitées par les sous-traitants
+  suivants, pour notre compte et sur nos seules instructions :</p>
+  <div class="wrapt"><table>
+    <tr><th>Prestataire</th><th>Rôle</th><th>Pays</th></tr>
+    <tr><td>Vercel Inc.</td><td>Hébergement du site</td><td>États-Unis</td></tr>
+    <tr><td>Supabase</td><td>Comptes et base de données</td><td>Union européenne</td></tr>
+    <tr><td>Mistral AI</td><td>Moteur d'analyse</td><td>Union européenne</td></tr>
+    <tr><td>Google</td><td>Moteur Gemini, connexion Google, polices de caractères</td><td>États-Unis</td></tr>
+    <tr><td>OpenAI</td><td>Moteur d'analyse (formules payantes)</td><td>États-Unis</td></tr>
+    <tr><td>Anthropic</td><td>Moteur d'analyse (formules payantes)</td><td>États-Unis</td></tr>
+  </table></div>
+
+  <h2>Transferts hors Union européenne</h2>
+  <p>Lancer un scan revient à transmettre <b>le nom de votre marque et votre activité</b> aux moteurs
+  sélectionnés. Certains sont établis aux États-Unis. Ces transferts s'appuient sur les clauses
+  contractuelles types de la Commission européenne et, lorsque le prestataire y adhère, sur le cadre
+  <i>EU-US Data Privacy Framework</i>.</p>
+  <p><b>Le scan gratuit n'interroge que Mistral, hébergé en Europe.</b> Les moteurs américains ne sont
+  sollicités que sur les formules payantes.</p>
+
+  <h2>Combien de temps nous les gardons</h2>
+  <ul>
+    <li><b>Compte et scans</b> — tant que le compte existe.</li>
+    <li><b>Après suppression du compte</b> — effacement sous 30 jours.</li>
+    <li><b>Journaux techniques</b> — 12 mois au maximum.</li>
+  </ul>
+
+  <h2>Vos droits</h2>
+  <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et
+  de portabilité sur vos données. Écrivez à <b>[contact@selyraia.com]</b> : nous répondons dans un
+  délai d'un mois.</p>
+  <p>Vous pouvez également introduire une réclamation auprès de la <b>CNIL</b> —
+  <a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>.</p>
+
+  <h2>Sécurité</h2>
+  <p>Les échanges sont chiffrés (HTTPS). L'accès aux données est cloisonné par compte au niveau de la
+  base de données : un utilisateur ne peut techniquement pas lire les scans d'un autre. Les clés
+  d'accès aux moteurs d'IA restent côté serveur et ne transitent jamais par votre navigateur.</p>
+</div></div>
+</main>
+
+<!-- COOKIES -->
+<main id="v-cookies" class="hide">
+<div class="wrap"><div class="legal">
+  <div class="navbar2"><button onclick="go('home')">&larr; Accueil</button></div>
+  <h1>Cookies et traceurs</h1>
+  <p class="maj">Dernière mise à jour : 25 août 2026</p>
+
+  <h2>En un mot</h2>
+  <p>Ce site n'utilise <b>aucun cookie publicitaire</b> et <b>aucune mesure d'audience</b>. Il ne vous
+  suit pas d'un site à l'autre et ne revend rien.</p>
+
+  <h2>Ce que nous déposons sur votre appareil</h2>
+  <div class="wrapt"><table>
+    <tr><th>Nom</th><th>Type</th><th>Rôle</th><th>Durée</th></tr>
+    <tr><td>Session Supabase</td><td>Stockage local</td><td>Vous garder connecté</td><td>Jusqu'à déconnexion</td></tr>
+    <tr><td>selyraia_goto</td><td>Stockage local</td><td>Vous ramener au bon écran après connexion</td><td>Quelques secondes</td></tr>
+    <tr><td>selyraia_traceurs</td><td>Stockage local</td><td>Retenir que vous avez lu le bandeau</td><td>Jusqu'à effacement</td></tr>
+  </table></div>
+  <p>Ces trois éléments sont <b>strictement nécessaires</b> au fonctionnement du service : sans eux, la
+  connexion est impossible. À ce titre, ils ne requièrent pas votre consentement préalable.</p>
+
+  <h2>Ressources chargées depuis des serveurs tiers</h2>
+  <ul>
+    <li><b>Google Fonts</b> — la police de caractères du site.</li>
+    <li><b>jsDelivr</b> — la bibliothèque technique qui gère la connexion.</li>
+  </ul>
+  <p>Ces requêtes ne déposent pas de cookie, mais elles transmettent votre <b>adresse IP</b> au serveur
+  concerné, ce qui constitue une donnée personnelle. C'est la seule raison d'être du bandeau
+  d'information affiché lors de votre première visite.</p>
+
+  <h2>Votre choix</h2>
+  <p>Le bandeau vous permet d'accuser réception de cette information. Vous pouvez à tout moment
+  bloquer ces ressources depuis les réglages de votre navigateur ou une extension dédiée : le site
+  reste parfaitement utilisable, seule la typographie changera.</p>
+  <p>Pour tout savoir sur le traitement de vos données, consultez notre
+  <a href="#confidentialite" onclick="go('privacy');return false;">politique de confidentialité</a>.</p>
+</div></div>
+</main>
+
 <div class="wrap"><footer>
-  <span>Selyraia · marque en cours de dépôt</span>
-  <span>Fait en France · Données traitées en Europe</span>
+  <div class="flinks">
+    <a href="#mentions-legales" onclick="go('legal');return false;">Mentions légales</a>
+    <a href="#confidentialite" onclick="go('privacy');return false;">Confidentialité</a>
+    <a href="#cookies" onclick="go('cookies');return false;">Cookies</a>
+  </div>
+  <span>Selyraia · marque en cours de dépôt · Fait en France · Données traitées en Europe</span>
 </footer></div>
 
 </div>
@@ -1201,7 +1406,7 @@ try{
 }catch(e){ console.error('Supabase indisponible',e); }
 
 var S={user:null,me:null,plan:null,yearly:false,mode:'signup',last:null,history:[]};
-var VIEWS=['home','scan','plans','auth','app'];
+var VIEWS=['home','scan','plans','auth','app','legal','privacy','cookies'];
 var stack=['home'];
 
 /* Une marque ou un concurrent ne compte que s'il apparait comme un mot entier :
@@ -1276,6 +1481,42 @@ async function boot(){
   }catch(e){}
 }
 boot();
+
+/* ═══ Pages légales : adresse partageable et bandeau d'information ═══ */
+var LEGAL_HASH = { 'mentions-legales':'legal', 'confidentialite':'privacy', 'cookies':'cookies' };
+
+function routerLegal(){
+  var v = LEGAL_HASH[(window.location.hash || '').replace(/^#/, '')];
+  if(v) go(v);
+}
+window.addEventListener('hashchange', routerLegal);
+routerLegal();
+
+(function bandeauTraceurs(){
+  var CLE = 'selyraia_traceurs';
+  try { if(localStorage.getItem(CLE)) return; } catch(e) { return; }
+
+  var el = document.createElement('div');
+  el.className = 'cbanner';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Information sur les traceurs');
+  el.innerHTML =
+    '<p>Ce site n\'utilise <b>aucun traceur publicitaire</b> et ne mesure pas votre audience. '
+    + 'Seul un stockage local strictement nécessaire vous garde connecté. La police de caractères '
+    + 'est chargée depuis Google, ce qui transmet votre adresse IP.</p>'
+    + '<div class="crow">'
+    + '<button class="btn b1 sm" id="cbOk">J\'ai compris</button>'
+    + '<button class="btn b2 sm" id="cbPlus">En savoir plus</button>'
+    + '</div>';
+  document.body.appendChild(el);
+
+  function fermer(){
+    try { localStorage.setItem(CLE, String(Date.now())); } catch(e) {}
+    el.remove();
+  }
+  el.querySelector('#cbOk').onclick = fermer;
+  el.querySelector('#cbPlus').onclick = function(){ fermer(); go('cookies'); };
+})();
 
 async function logout(){
   if(supa){try{await supa.auth.signOut();}catch(e){}}

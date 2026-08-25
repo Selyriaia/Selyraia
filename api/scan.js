@@ -17,12 +17,17 @@
 // Variables d'environnement Vercel :
 //   MISTRAL_API_KEY (obligatoire) · SUPABASE_SERVICE_KEY (obligatoire)
 //   ANTHROPIC_API_KEY · OPENAI_API_KEY · GEMINI_API_KEY (optionnelles)
+//   ADMIN_EMAILS (optionnelle) : adresses administratrices, séparées par des virgules
 // -----------------------------------------------------------------------------
 
 const SUPABASE_URL = 'https://ysafgvpeotvgpyswjgdu.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzYWZndnBlb3R2Z3B5c3dqZ2R1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDQ4NTYsImV4cCI6MjEwMjEyMDg1Nn0.YCTLi3DmaWwDnRETcZscg1__hS9_kN7-xOZg-uAjF8E';
 
-const ADMINS = ['selyriaia@gmail.com'];
+// Les administrateurs sont déclarés par variable d'environnement : ajouter une adresse
+// ne demande donc plus de toucher au code.
+const ADMINS = String(process.env.ADMIN_EMAILS || "selyriaia@gmail.com")
+  .split(",").map(e => e.trim().toLowerCase())
+  .filter(Boolean);
 
 const ENGINES = {
   mistral: { label: 'Mistral', env: 'MISTRAL_API_KEY',   model: 'mistral-small-latest',  free: true  },
