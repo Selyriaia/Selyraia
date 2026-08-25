@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { PLANS, ENGINES, INTENTS, VARIANTS, questions, looseParse, isAdminEmail }
+import { PLANS, ENGINES, INTENTS, VARIANTS, questions, looseParse, isAdminEmail, etatQuota }
   from '../api/scan.js';
 
 /* ═══ 1. Conformité à la grille tarifaire publiée ═══════════════════════════
@@ -250,5 +250,76 @@ test('toutes les vues déclarées existent dans la page', async () => {
   assert.ok(m, 'la liste des vues est introuvable');
   for (const v of m[1].split(',').map(x => x.trim().replace(/['"]/g, ''))) {
     assert.ok(page.includes(`id="v-${v}"`), `la vue « ${v} » est déclarée mais absente`);
+  }
+});
+
+/* ═══ 8. Le droit de lancer un scan ═════════════════════════════════════════
+   Règle non testable en ligne sans se connecter à un compte client : on la
+   vérifie ici, cas par cas, sur la fonction pure qui la porte.            */
+
+const H = 3600000;
+const T0 = Date.parse('2026-08-25T12:00:00Z');
+
+test('le gratuit a droit à un scan, une seule fois', () => {
+  const neuf = etatQuota(PLANS.free, 0, 0, false, T0);
+  assert.equal(neuf.canScan, true, 'un compte neuf doit pouvoir scanner');
+  assert.equal(neuf.exhausted, false);
+
+  const apres = etatQuota(PLANS.free, 1, T0, false, T0 + 1000);
+  assert.equal(apres.canScan, false, 'le second scan gratuit doit être refusé');
+  assert.equal(apres.exhausted, true);
+});
+
+test('le gratuit reste bloqué même des années plus tard', () => {
+  const bien_plus_tard = etatQuota(PLANS.free, 1, T0, false, T0 + 3 * 365 * 24 * H);
+  assert.equal(bien_plus_tard.canScan, false,
+    'le scan offert ne se recharge jamais : c\'est un scan à vie, pas une cadence');
+});
+
+test('Plus attend 48 h entre deux scans', () => {
+  assert.equal(etatQuota(PLANS.plus, 1, T0, false, T0 + 47 * H).canScan, false,
+    'à 47 h le scan doit encore être refusé');
+  assert.equal(etatQuota(PLANS.plus, 1, T0, false, T0 + 48 * H).canScan, true,
+    'à 48 h pile le scan doit être autorisé');
+  assert.equal(etatQuota(PLANS.plus, 1, T0, false, T0 + 49 * H).canScan, true);
+});
+
+test('Pro et Agence attendent 24 h', () => {
+  for (const nom of ['pro', 'agence']) {
+    assert.equal(etatQuota(PLANS[nom], 1, T0, false, T0 + 23 * H).canScan, false,
+      `${nom} : refus attendu avant 24 h`);
+    assert.equal(etatQuota(PLANS[nom], 1, T0, false, T0 + 24 * H).canScan, true,
+      `${nom} : autorisation attendue à 24 h`);
+  }
+});
+
+test('un compte payant qui n\'a jamais scanné peut scanner tout de suite', () => {
+  for (const nom of ['plus', 'pro', 'agence']) {
+    const e = etatQuota(PLANS[nom], 0, 0, false, T0);
+    assert.equal(e.canScan, true, `${nom} : premier scan refusé à tort`);
+    assert.equal(e.nextAt, 0, `${nom} : aucune échéance ne doit être annoncée`);
+  }
+});
+
+test('la date du prochain scan est annoncée juste', () => {
+  assert.equal(etatQuota(PLANS.plus, 1, T0, false, T0).nextAt, T0 + 48 * H);
+  assert.equal(etatQuota(PLANS.pro,  1, T0, false, T0).nextAt, T0 + 24 * H);
+  assert.equal(etatQuota(PLANS.free, 1, T0, false, T0).nextAt, 0,
+    'le gratuit n\'a pas de prochaine échéance : il est épuisé');
+});
+
+test('l\'administrateur n\'est jamais bloqué', () => {
+  for (const nom of Object.keys(PLANS)) {
+    const e = etatQuota(PLANS[nom], 99, T0, true, T0);
+    assert.equal(e.canScan, true, `${nom} : l'admin doit toujours pouvoir scanner`);
+    assert.equal(e.waiting, false);
+    assert.equal(e.exhausted, false);
+  }
+});
+
+test('une date de dernier scan absurde ne débloque pas le gratuit', () => {
+  for (const lastAt of [0, NaN, -1, T0 + 10 * 365 * 24 * H]) {
+    assert.equal(etatQuota(PLANS.free, 1, lastAt, false, T0).canScan, false,
+      `le gratuit épuisé doit rester bloqué (lastAt = ${lastAt})`);
   }
 });

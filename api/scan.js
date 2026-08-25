@@ -330,6 +330,22 @@ function questions(d, count) {
   return out;
 }
 
+/* Décide, pour une formule et un compte donnés, si un scan est autorisé.
+   Fonction pure et exportée : c'est la règle qui protège le chiffre
+   d'affaires, elle doit pouvoir être vérifiée sans base de données.
+     cap    : les droits de la formule (PLANS)
+     used   : scans déjà consommés sur la période
+     lastAt : date du dernier scan, en millisecondes (0 si aucun)
+     admin  : l'administrateur n'est jamais limité
+     now    : instant de référence, pour rendre le test déterministe */
+function etatQuota(cap, used, lastAt, admin, now) {
+  const t = Number.isFinite(now) ? now : Date.now();
+  const nextAt = (cap.everyHours && lastAt) ? lastAt + cap.everyHours * 3600000 : 0;
+  const waiting   = !admin && !!cap.everyHours && t < nextAt;
+  const exhausted = !admin && !!cap.oneShot && (used || 0) >= 1;
+  return { nextAt, waiting, exhausted, canScan: !!admin || (!waiting && !exhausted) };
+}
+
 /* ─── Entrée ────────────────────────────────────────────────────────────── */
 
 export default { async fetch(request) {
@@ -389,9 +405,7 @@ export default { async fetch(request) {
 
   // Fréquence réelle : le gratuit est un scan à vie, les payants un scan toutes les N heures.
   const lastAt = profile.last_scan_at ? Date.parse(profile.last_scan_at) : 0;
-  const nextAt = (cap.everyHours && lastAt) ? lastAt + cap.everyHours * 3600000 : 0;
-  const waiting   = !admin && !!cap.everyHours && Date.now() < nextAt;
-  const exhausted = !admin && cap.oneShot && used >= 1;
+  const { nextAt, waiting, exhausted } = etatQuota(cap, used, lastAt, admin);
 
   // Un moteur n'est proposé que si sa clé est réellement présente.
   const allowed = cap.engines.filter(e => !!process.env[ENGINES[e].env]);
@@ -858,4 +872,4 @@ Règles :
 
 /* Exportés pour la suite de tests. Vercel n'utilise que l'export par défaut :
    ces exports supplémentaires n'ont aucun effet sur le déploiement. */
-export { PLANS, ENGINES, INTENTS, VARIANTS, questions, looseParse, isAdminEmail };
+export { PLANS, ENGINES, INTENTS, VARIANTS, questions, looseParse, isAdminEmail, etatQuota };
