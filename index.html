@@ -2472,38 +2472,59 @@ var DOUX = window.matchMedia && window.matchMedia('(prefers-reduced-motion: redu
 
 /* ═══ Garde-fou de fluidité ═══════════════════════════════════════════════
    Certaines machines n'accélèrent pas le rendu graphique : les décors
-   animés y font tomber la page à quelques images par seconde. Plutôt que
-   de parier sur le matériel, on mesure la fluidité réelle pendant la
-   première seconde et on bascule en mode économie si elle est mauvaise.
-   La mesure est refaite une fois, plus tard, car la première seconde
-   coïncide avec le chargement des polices et peut être trompeuse. */
+   animés y font tomber la page à quelques images par seconde. On mesure
+   donc la fluidité réelle et on bascule en mode économie si elle est
+   mauvaise.
+
+   Deux pièges évités, car un faux positif abîmerait le site pour tout le
+   monde :
+   - un onglet en arrière-plan bride requestAnimationFrame à environ une
+     image par seconde ; on ne juge jamais une page qui n'est pas visible,
+     et on abandonne la mesure en cours si l'onglet passe derrière ;
+   - une seule mauvaise fenêtre peut venir du chargement des polices ; il
+     en faut deux consécutives pour trancher. */
 (function garde(){
   if(DOUX) return;
-  var essais = 0;
+  var mauvais = 0, tours = 0;
+  var SEUIL = 20;          // en dessous, le défilement est réellement pénible
+  var FENETRE = 1500;      // durée d'une mesure, en millisecondes
 
-  function mesurer(apres){
-    var n = 0, t0 = performance.now();
+  function mesurer(fini){
+    if(document.visibilityState !== 'visible') return fini(null);
+    var n = 0, t0 = performance.now(), dernier = t0;
+
     function tour(){
-      n++;
-      var dt = performance.now() - t0;
-      if(dt < 1100){ requestAnimationFrame(tour); return; }
-      apres(n / (dt / 1000));
+      var t = performance.now();
+      // Un trou de plus de 400 ms signe un passage en arrière-plan, pas une
+      // machine lente : la mesure ne vaut plus rien.
+      if(t - dernier > 400 || document.visibilityState !== 'visible') return fini(null);
+      dernier = t; n++;
+      if(t - t0 < FENETRE){ requestAnimationFrame(tour); return; }
+      fini(n / ((t - t0) / 1000));
     }
     requestAnimationFrame(tour);
   }
 
   function juger(fps){
-    essais++;
-    if(fps < 32){
-      document.documentElement.classList.add('eco');
-      return;                       // inutile de remesurer : c'est tranché
+    tours++;
+    if(fps === null){
+      mauvais = 0;                       // mesure inexploitable, on repart à zéro
+    }else if(fps < SEUIL){
+      mauvais++;
+      if(mauvais >= 2){                  // deux fenêtres mauvaises d'affilée
+        document.documentElement.classList.add('eco');
+        return;
+      }
+    }else{
+      mauvais = 0;
     }
-    if(essais < 2) setTimeout(function(){ mesurer(juger); }, 3000);
+    if(tours < 6) setTimeout(function(){ mesurer(juger); }, 2500);
   }
 
-  // On laisse la page se poser avant de juger.
-  setTimeout(function(){ mesurer(juger); }, 700);
+  // On laisse la page se poser avant de juger quoi que ce soit.
+  setTimeout(function(){ mesurer(juger); }, 1500);
 })();
+
 
 
 /* Apparition progressive au défilement */
