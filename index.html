@@ -31,7 +31,10 @@
                radial-gradient(540px 320px at 88% 8%,rgba(176,107,255,.10),transparent 70%)}
   .layer{position:relative;z-index:1}
 
-  header.top{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px);background:rgba(8,9,11,.75);border-bottom:1px solid var(--ln)}
+  /* backdrop-filter se recalcule à chaque image de défilement : 12 px suffit
+     visuellement et coûte nettement moins que 18. */
+  header.top{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:rgba(8,9,11,.82);border-bottom:1px solid var(--ln)}
   nav{display:flex;align-items:center;justify-content:space-between;padding:11px 0;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;background:none;border:0;cursor:pointer;font-size:17px;font-weight:600;color:var(--tx);letter-spacing:-.02em;padding:0}
   .logo img{width:30px;height:30px;border-radius:9px;display:block;flex-shrink:0}
@@ -335,18 +338,29 @@
   /* Fond : deux halos qui dérivent lentement. C'est ce qui donne la
      profondeur ; l'ancien halo était si pâle qu'il était invisible. */
   .aurora{position:fixed;inset:-20% -10%;pointer-events:none;z-index:0;opacity:.85}
-  .aurora span{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
-  .aurora .a1{width:52vw;height:52vw;left:-8vw;top:-14vw;
-    background:radial-gradient(circle,rgba(123,107,255,.36),transparent 68%);
+  /* Aucun filter:blur ici. Un blur(90px) sur un disque de 1000 px doit être
+     recalculé à chaque image dès que l'élément bouge, et le scale() de
+     l'animation empêchait toute mise en cache : trois halos suffisaient à
+     faire tomber la page à quelques images par seconde. Le dégradé à
+     plusieurs paliers donne le même rendu, sans aucun coût de rendu. */
+  .aurora span{position:absolute;border-radius:50%;will-change:transform;
+    transform:translateZ(0)}
+  .aurora .a1{width:64vw;height:64vw;left:-14vw;top:-20vw;
+    background:radial-gradient(circle,rgba(123,107,255,.30) 0%,
+      rgba(123,107,255,.175) 28%,rgba(123,107,255,.065) 52%,transparent 74%);
     animation:drift1 26s ease-in-out infinite alternate}
-  .aurora .a2{width:44vw;height:44vw;right:-6vw;top:-6vw;
-    background:radial-gradient(circle,rgba(176,107,255,.30),transparent 68%);
+  .aurora .a2{width:54vw;height:54vw;right:-11vw;top:-10vw;
+    background:radial-gradient(circle,rgba(176,107,255,.25) 0%,
+      rgba(176,107,255,.145) 28%,rgba(176,107,255,.055) 52%,transparent 74%);
     animation:drift2 32s ease-in-out infinite alternate}
-  .aurora .a3{width:38vw;height:38vw;left:38vw;top:26vw;
-    background:radial-gradient(circle,rgba(63,207,142,.13),transparent 70%);
+  .aurora .a3{width:48vw;height:48vw;left:34vw;top:22vw;
+    background:radial-gradient(circle,rgba(63,207,142,.115) 0%,
+      rgba(63,207,142,.065) 30%,rgba(63,207,142,.024) 55%,transparent 76%);
     animation:drift1 38s ease-in-out infinite alternate-reverse}
-  @keyframes drift1{to{transform:translate3d(7vw,5vw,0) scale(1.12)}}
-  @keyframes drift2{to{transform:translate3d(-6vw,7vw,0) scale(1.08)}}
+  /* Translation seule : entièrement prise en charge par la carte graphique.
+     Le scale() d'origine forçait un nouveau rendu à chaque image. */
+  @keyframes drift1{to{transform:translate3d(7vw,5vw,0)}}
+  @keyframes drift2{to{transform:translate3d(-6vw,7vw,0)}}
 
   /* Trame technique très discrète, en surimpression */
   .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
@@ -482,6 +496,15 @@
   }
 
 
+  /* Mode économie : activé automatiquement quand la machine ne tient pas
+     30 images par seconde. Mieux vaut un fond sobre qu'un site saccadé. */
+  html.eco .aurora span,html.eco .b1::after,html.eco .livepill i,
+  html.eco .save,html.eco h1 .g{animation:none!important}
+  html.eco .aurora{opacity:.55}
+  html.eco .grid-bg{display:none}
+  html.eco header.top{backdrop-filter:none;background:rgba(8,9,11,.95)}
+  html.eco *,html.eco *::before,html.eco *::after{transition-duration:.12s!important}
+
   /* ── Bandeau des moteurs interrogés ── */
   .moteurs{display:flex;align-items:center;justify-content:center;gap:34px;flex-wrap:wrap;
     padding:22px 0 0;margin-bottom:70px}
@@ -516,9 +539,12 @@
     align-items:center;padding:46px;border-radius:22px;overflow:hidden;
     background:linear-gradient(150deg,rgba(123,107,255,.13),rgba(176,107,255,.05) 45%,var(--sf) 80%);
     border:1px solid rgba(123,107,255,.28)}
-  .freebox::before{content:'';position:absolute;width:460px;height:460px;right:-130px;top:-190px;
-    border-radius:50%;filter:blur(80px);pointer-events:none;
-    background:radial-gradient(circle,rgba(123,107,255,.30),transparent 68%)}
+  /* Ce bloc apparaît au défilement (classe reveal) : un flou ici serait
+     recalculé pendant toute l'apparition. */
+  .freebox::before{content:'';position:absolute;width:600px;height:600px;right:-200px;top:-260px;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(123,107,255,.26) 0%,
+      rgba(123,107,255,.15) 30%,rgba(123,107,255,.055) 54%,transparent 76%)}
   .freebox > *{position:relative}
   .freebox h2{margin-bottom:12px}
   .freebox .lead2{font-size:17px;color:var(--dm);margin-bottom:22px;max-width:46ch}
@@ -570,9 +596,12 @@
     background:linear-gradient(160deg,rgba(123,107,255,.9),rgba(176,107,255,.35) 45%,rgba(123,107,255,.15));
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+  /* Le survol translate la carte : un flou ici serait recalculé pendant
+     toute l'animation. Dégradé progressif à la place. */
   .plan.best::after{content:'';position:absolute;inset:-24% 6% 40%;z-index:-1;border-radius:50%;
-    filter:blur(58px);pointer-events:none;
-    background:radial-gradient(circle,rgba(123,107,255,.34),transparent 70%)}
+    pointer-events:none;
+    background:radial-gradient(circle,rgba(123,107,255,.30) 0%,
+      rgba(123,107,255,.17) 30%,rgba(123,107,255,.06) 54%,transparent 76%)}
   .plan.best:hover{transform:translateY(-9px)}
   .plans{position:relative;z-index:1}
   .plan .pp{transition:transform .3s}
@@ -591,9 +620,10 @@
 
   /* ── Page Connexion ── */
   .authbox{position:relative}
-  .authbox::before{content:'';position:absolute;width:340px;height:340px;left:50%;top:-90px;
-    transform:translateX(-50%);border-radius:50%;filter:blur(72px);pointer-events:none;z-index:-1;
-    background:radial-gradient(circle,rgba(123,107,255,.26),transparent 68%)}
+  .authbox::before{content:'';position:absolute;width:460px;height:460px;left:50%;top:-150px;
+    transform:translateX(-50%);border-radius:50%;pointer-events:none;z-index:-1;
+    background:radial-gradient(circle,rgba(123,107,255,.23) 0%,
+      rgba(123,107,255,.13) 30%,rgba(123,107,255,.048) 54%,transparent 76%)}
   .authlogo img{box-shadow:0 14px 40px -12px rgba(123,107,255,.7)}
   .prov{transition:transform .25s,border-color .25s,background .25s}
   .prov:hover{transform:translateY(-2px)}
@@ -641,9 +671,10 @@
   /* Verdict : plus de présence */
   .verd{position:relative;overflow:hidden;
     box-shadow:0 26px 70px -34px rgba(0,0,0,.95)}
-  .verd::after{content:'';position:absolute;width:340px;height:340px;right:-110px;top:-150px;
-    border-radius:50%;filter:blur(70px);pointer-events:none;
-    background:radial-gradient(circle,rgba(123,107,255,.20),transparent 70%)}
+  .verd::after{content:'';position:absolute;width:460px;height:460px;right:-170px;top:-210px;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(123,107,255,.18) 0%,
+      rgba(123,107,255,.10) 30%,rgba(123,107,255,.036) 54%,transparent 76%)}
   .verd > *{position:relative}
   .vnum{background:linear-gradient(100deg,#fff,#C9BFFF);-webkit-background-clip:text;
     background-clip:text;-webkit-text-fill-color:transparent}
@@ -2438,6 +2469,42 @@ function pick(p){
 /* ═══════════ Animations de la page d'accueil ═══════════════════════════ */
 
 var DOUX = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ═══ Garde-fou de fluidité ═══════════════════════════════════════════════
+   Certaines machines n'accélèrent pas le rendu graphique : les décors
+   animés y font tomber la page à quelques images par seconde. Plutôt que
+   de parier sur le matériel, on mesure la fluidité réelle pendant la
+   première seconde et on bascule en mode économie si elle est mauvaise.
+   La mesure est refaite une fois, plus tard, car la première seconde
+   coïncide avec le chargement des polices et peut être trompeuse. */
+(function garde(){
+  if(DOUX) return;
+  var essais = 0;
+
+  function mesurer(apres){
+    var n = 0, t0 = performance.now();
+    function tour(){
+      n++;
+      var dt = performance.now() - t0;
+      if(dt < 1100){ requestAnimationFrame(tour); return; }
+      apres(n / (dt / 1000));
+    }
+    requestAnimationFrame(tour);
+  }
+
+  function juger(fps){
+    essais++;
+    if(fps < 32){
+      document.documentElement.classList.add('eco');
+      return;                       // inutile de remesurer : c'est tranché
+    }
+    if(essais < 2) setTimeout(function(){ mesurer(juger); }, 3000);
+  }
+
+  // On laisse la page se poser avant de juger.
+  setTimeout(function(){ mesurer(juger); }, 700);
+})();
+
 
 /* Apparition progressive au défilement */
 (function(){
